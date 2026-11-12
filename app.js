@@ -1,7 +1,7 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "2.3";
+  const VERSION = "2.4";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", alle: false, photo: null, current: null, urls: [] };
@@ -428,6 +428,8 @@
     $("csvBtn").hidden = items.length === 0;
     $("cnt").textContent = items.length === 1 ? "1 bon" : items.length + " bonnen";
     $("sum").textContent = eur(items.reduce((s, b) => s + (Number(b.bedrag) || 0), 0));
+    $("listBox").hidden = items.length === 0 && mineBonnen().length === 0;
+    renderBreakdown(items);
     items.forEach((b) => {
       const li = document.createElement("li"), c = document.createElement("button"); c.type = "button"; c.className = "card";
       const th = document.createElement("img"); th.className = "th"; th.alt = ""; if (b.thumb) th.src = b.thumb;
@@ -441,6 +443,31 @@
     });
     const dl = $("dl-winkels"); dl.innerHTML = "";
     [...new Set(state.bonnen.map((b) => b.winkel).filter(Boolean))].forEach((w) => { const o = document.createElement("option"); o.value = w; dl.appendChild(o); });
+  }
+  // Uitklapblok onder het totaal: waar zit het geld? Per project, per pas en (bij Iedereen) per persoon.
+  function renderBreakdown(items) {
+    const box = $("breakdown"); box.innerHTML = "";
+    if (!items.length) return;
+    const groups = [["Per project", "project"], ["Per pas of rekening", "pas"]];
+    if (new Set(items.map((b) => b.wie || "")).size > 1) groups.push(["Per persoon", "wie"]);
+    for (const [title, key] of groups) {
+      const m = new Map();
+      items.forEach((b) => { const k = b[key] || "–"; const r = m.get(k) || { n: 0, s: 0 }; r.n++; r.s += Number(b.bedrag) || 0; m.set(k, r); });
+      const sec = document.createElement("div"); sec.className = "bd";
+      const h = document.createElement("div"); h.className = "bd-h"; h.textContent = t(title); sec.appendChild(h);
+      [...m.entries()].sort((a, b) => b[1].s - a[1].s).forEach(([k, r]) => {
+        const row = document.createElement("button"); row.type = "button"; row.className = "bd-row";
+        const a = document.createElement("span"); a.textContent = k;
+        const c = document.createElement("span"); c.className = "bd-n"; c.textContent = r.n === 1 ? t("1 bon") : t("{n} bonnen", { n: r.n });
+        const v = document.createElement("b"); v.className = "amount"; v.textContent = eur(r.s);
+        row.append(a, c, v);
+        // Tik op een project of pas: lijst filteren.
+        if (key !== "wie" && k !== "–") row.onclick = () => { const sel = $(key === "project" ? "flt-project" : "flt-pas"); if ([...sel.options].some((o) => o.value === k)) { sel.value = sel.value === k ? "" : k; renderList(); } };
+        else row.disabled = true;
+        sec.appendChild(row);
+      });
+      box.appendChild(sec);
+    }
   }
   $("flt-project").addEventListener("change", renderList);
   $("flt-pas").addEventListener("change", renderList);
@@ -580,7 +607,7 @@
     b.insertAdjacentHTML("beforeend", '<svg class="ic chev" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
     h.appendChild(b);
     const set = (open) => { g.classList.toggle("closed", !open); b.setAttribute("aria-expanded", String(open)); };
-    set(recall(key) === "1");
+    set(g.dataset.open === "1" ? recall(key) !== "0" : recall(key) === "1");
     b.addEventListener("click", () => { const open = g.classList.contains("closed"); set(open); remember(key, open ? "1" : "0"); });
   });
 

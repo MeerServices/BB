@@ -11,12 +11,12 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=2.3">
+<link rel="stylesheet" href="style.css?v=2.4">
 </head>
 <body>
 <header>
   <div class="wrap">
-    <div class="brand"><h1><button class="titlebtn" id="appTitle" type="button" aria-label="Info over BB">BB <span id="appVer">v2.3</span> <small class="copy">©26 Vipware</small></button></h1><button class="userbtn" id="userBtn" type="button" aria-label="Andere gebruiker kiezen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><span id="userName">Kies wie</span></button></div>
+    <div class="brand"><h1><button class="titlebtn" id="appTitle" type="button" aria-label="Info over BB">BB <span id="appVer">v2.4</span> <small class="copy">©26 Vipware</small></button></h1><button class="userbtn" id="userBtn" type="button" aria-label="Andere gebruiker kiezen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><span id="userName">Kies wie</span></button></div>
     <nav role="tablist">
       <button role="tab" aria-selected="true" data-view="bonnen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 21z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span class="lbl">Bonnen</span><span class="badge" hidden></span></button>
       <button role="tab" aria-selected="false" data-view="statiegeld"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v3.5c0 .6-.3 1.1-.7 1.5C8 9 7 10.5 7 12.5V19a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-6.5c0-2-1-3.5-2.3-4.5-.4-.4-.7-.9-.7-1.5V3"/><path d="M7 14h10"/></svg><span class="lbl">Statiegeld</span><span class="badge" hidden></span></button>
@@ -42,6 +42,7 @@
           <li>Tik op <b>Nieuwe bon</b>, maak een foto met de camera of kies er een uit je galerij.</li>
           <li>BB leest meteen de hele bon. Winkel, datum en bedrag worden ingevuld en alle tekst van de bon komt in het memoveld. Controleer het even. Met <b>Bon automatisch lezen</b> doe je dit opnieuw.</li>
           <li>Kies project, pas of rekening en schrijf de reden erbij. Tik op <b>Bon bewaren</b>.</li>
+          <li>Tik op de regel met het aantal bonnen en het totaal om de lijst in of uit te klappen. Uitgeklapt zie je ook hoeveel er per project, per pas en (bij Iedereen) per persoon is uitgegeven. Tik op een project of pas om alleen die bonnen te zien.</li>
           <li>Filter op project of pas en zie meteen het totaal. Tik op een bon om hem te bekijken, te delen via WhatsApp of e-mail, of te verwijderen.</li>
           <li><b>Overzicht delen (CSV)</b> zet de bonnen die je ziet in een bestand voor Excel.</li>
         </ul>
@@ -86,6 +87,7 @@
           <li>Tap <b>New receipt</b> and take a photo with the camera or pick one from your gallery.</li>
           <li>BB reads the whole receipt right away. Store, date and amount are filled in and all text from the receipt goes into the memo field. Give it a quick check. <b>Read receipt automatically</b> does it again.</li>
           <li>Pick a project and a card or account, and add the reason. Tap <b>Save receipt</b>.</li>
+          <li>Tap the line with the number of receipts and the total to expand or collapse the list. Expanded, you also see how much was spent per project, per card and (with Everyone) per person. Tap a project or card to see only those receipts.</li>
           <li>Filter by project or card and see the total right away. Tap a receipt to view it, share it via WhatsApp or email, or delete it.</li>
           <li><b>Share overview (CSV)</b> puts the receipts you see in a file for Excel.</li>
         </ul>
@@ -198,8 +200,11 @@
       <label>Project<select id="flt-project"></select></label>
       <label>Pas<select id="flt-pas"></select></label>
     </div>
-    <div class="total"><span id="cnt">0 bonnen</span><b class="amount" id="sum">€ 0,00</b></div>
-    <ul class="list" id="list"></ul>
+    <div class="group fold" data-fold="bonlijst" data-open="1" id="listBox">
+      <h3><span class="total"><span id="cnt">0 bonnen</span><b class="amount" id="sum">€ 0,00</b></span></h3>
+      <div class="breakdown" id="breakdown"></div>
+      <ul class="list" id="list"></ul>
+    </div>
     <div class="empty" id="listEmpty" data-i18n>Nog geen bonnen. Tik op <b>Nieuwe bon</b> om je eerste bon toe te voegen.</div>
     <div class="btns"><button class="btn" id="csvBtn" type="button"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>Overzicht delen (CSV)</button></div>
     <div class="group fold" data-fold="sync" id="syncBox">
@@ -266,11 +271,11 @@
     <div class="btns"><button class="btn" value="no" id="askNo">Annuleren</button><button class="btn danger" value="yes" id="askYes">Ja, verwijderen</button></div>
   </form>
 </dialog>
-<script src="i18n.js?v=2.3"></script>
-<script src="config.js?v=2.3"></script>
-<script src="app.js?v=2.3"></script>
-<script src="sync.js?v=2.3"></script>
-<script src="scan.js?v=2.3"></script>
-<script src="vouchers.js?v=2.3"></script>
+<script src="i18n.js?v=2.4"></script>
+<script src="config.js?v=2.4"></script>
+<script src="app.js?v=2.4"></script>
+<script src="sync.js?v=2.4"></script>
+<script src="scan.js?v=2.4"></script>
+<script src="vouchers.js?v=2.4"></script>
 </body>
 </html>

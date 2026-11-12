@@ -193,3 +193,15 @@ nav button .lbl{font-size:10.5px;letter-spacing:-.15px}
 .card .sgbar.sgcal .ic{width:28px;height:28px}
 nav button{flex:1 1 auto;padding-inline:1px}
 nav button .lbl{overflow:visible;text-overflow:clip}
+/* v2.4: uitklapbare bonnenlijst met verdeling */
+#listBox{padding-top:12px;padding-bottom:12px}
+#listBox .fold-btn .total{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-weight:500}
+#listBox .list{margin-top:4px}
+.breakdown{display:flex;flex-direction:column;gap:10px;margin:8px 0 6px}
+.bd{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.bd-h{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:8px 12px 4px}
+.bd-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:baseline;border:0;border-top:1px solid var(--line);background:none;font:inherit;color:var(--ink);text-align:left;padding:8px 12px;cursor:pointer}
+.bd-row:disabled{cursor:default;color:var(--ink);opacity:1}
+.bd-row span:first-child{min-width:0;overflow-wrap:anywhere}
+.bd-n{font-size:12.5px;color:var(--muted)}
+#listBox .fold-btn .total span{font-size:14px;color:var(--ink);font-weight:600}
