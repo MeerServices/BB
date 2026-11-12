@@ -1,6 +1,8 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
+  const VERSION = "1.1";
+  document.getElementById("appTitle").textContent = "BB v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], projecten: [], passen: [] }, photo: null, current: null, urls: [] };
 
