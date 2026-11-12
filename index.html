@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bonnenbak</title>
+<meta name="description" content="Kassabonnen fotograferen, bewaren en delen.">
+<meta name="theme-color" content="#1d6b56">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand"><h1>Bonnenbak</h1><span class="status" id="status">Bewaard op dit apparaat</span></div>
+    <nav role="tablist">
+      <button role="tab" aria-selected="true" data-view="nieuw">Nieuwe bon</button>
+      <button role="tab" aria-selected="false" data-view="bonnen">Bonnen</button>
+      <button role="tab" aria-selected="false" data-view="lijsten">Lijsten</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- NIEUWE BON -->
+  <section id="view-nieuw">
+    <div class="photo">
+      <img id="photoPreview" alt="Foto van de bon" hidden>
+      <div id="photoEmpty"><div class="big">Foto van de bon</div><div class="hint">Maak een foto met de camera of kies er een uit je galerij.</div></div>
+      <div class="pickers">
+        <input type="file" id="photoCam" class="vh" accept="image/*" capture="environment"><label for="photoCam" class="btn primary">Camera</label>
+        <input type="file" id="photoGal" class="vh" accept="image/*"><label for="photoGal" class="btn">Uit galerij</label>
+      </div>
+    </div>
+    <div class="btns" id="ocrRow" hidden><button class="btn" id="ocrBtn" type="button">Bon automatisch lezen</button></div>
+    <div id="ocrMsg" class="msg" hidden></div>
+
+    <form id="form" novalidate>
+      <div class="row">
+        <label>Winkel<input id="f-winkel" list="dl-winkels" placeholder="bijv. Karwei" autocomplete="off"></label>
+        <label>Datum<input id="f-datum" type="date"></label>
+      </div>
+      <div class="row">
+        <label>Bedrag (€)<input id="f-bedrag" class="amount" inputmode="decimal" placeholder="0,00"></label>
+        <label>Wie heeft betaald<select id="f-wie"></select></label>
+      </div>
+      <div class="row">
+        <label>Project<select id="f-project"></select></label>
+        <label>Pas of rekening<select id="f-pas"></select></label>
+      </div>
+      <label>Reden<textarea id="f-reden" placeholder="Waarvoor is dit gekocht?"></textarea></label>
+      <div id="formMsg" class="msg" hidden></div>
+      <div class="btns"><button class="btn primary" id="saveBtn" type="submit">Bon bewaren</button></div>
+    </form>
+    <datalist id="dl-winkels"></datalist>
+  </section>
+
+  <!-- BONNEN -->
+  <section id="view-bonnen" hidden>
+    <div class="filters">
+      <label>Project<select id="flt-project"></select></label>
+      <label>Pas<select id="flt-pas"></select></label>
+    </div>
+    <div class="total"><span id="cnt">0 bonnen</span><b class="amount" id="sum">€ 0,00</b></div>
+    <ul class="list" id="list"></ul>
+    <div class="empty" id="listEmpty">Nog geen bonnen. Maak een foto bij <b>Nieuwe bon</b> en tik op <b>Bon bewaren</b>.</div>
+    <div class="btns"><button class="btn" id="csvBtn" type="button">Overzicht delen (CSV)</button></div>
+  </section>
+
+  <!-- DETAIL -->
+  <section id="view-detail" hidden>
+    <button class="back" id="backBtn" type="button">← Terug naar bonnen</button>
+    <img class="detail-img" id="d-img" alt="Foto van de bon">
+    <div class="slip" id="d-slip"></div>
+    <h2>Delen</h2>
+    <div class="btns">
+      <button class="btn primary" id="shareBtn" type="button">Delen met foto</button>
+    </div>
+    <div class="btns">
+      <a class="btn" id="waBtn" target="_blank" rel="noopener">WhatsApp (alleen tekst)</a>
+      <a class="btn" id="mailBtn">E-mail (alleen tekst)</a>
+    </div>
+    <p class="hint" id="shareHint">Met <b>Delen met foto</b> kies je zelf WhatsApp, Gmail of een andere app. De foto en de gegevens gaan dan samen mee.</p>
+    <div class="copybox" id="d-text"></div>
+    <div id="detailMsg" class="msg" hidden></div>
+    <div class="btns"><button class="btn danger" id="delBtn" type="button">Bon verwijderen</button></div>
+    <div class="confirm" id="delConfirm" hidden>
+      <span>Deze bon en de foto definitief verwijderen?</span>
+      <div class="btns"><button class="btn danger" id="delYes" type="button">Ja, verwijderen</button><button class="btn" id="delNo" type="button">Annuleren</button></div>
+    </div>
+  </section>
+
+  <!-- LIJSTEN -->
+  <section id="view-lijsten" hidden>
+    <p class="hint">Deze keuzes verschijnen in het formulier.</p>
+    <div class="group" data-list="gebruikers"><h3>Wie (gebruikers)</h3><div class="chips"></div><div class="addrow"><input placeholder="Naam toevoegen" aria-label="Naam toevoegen"><button class="btn" type="button">Toevoegen</button></div></div>
+    <div class="group" data-list="projecten"><h3>Projecten</h3><div class="chips"></div><div class="addrow"><input placeholder="Project toevoegen" aria-label="Project toevoegen"><button class="btn" type="button">Toevoegen</button></div></div>
+    <div class="group" data-list="passen"><h3>Passen en rekeningen</h3><div class="chips"></div><div class="addrow"><input placeholder="bijv. Zakelijke pin ING" aria-label="Pas toevoegen"><button class="btn" type="button">Toevoegen</button></div></div>
+    <p class="hint">De bonnen worden nu bewaard op dit apparaat. Opslaan in Google Drive en Dropbox komt in de volgende versie.</p>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
