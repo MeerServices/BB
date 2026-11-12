@@ -1,7 +1,7 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "1.1";
+  const VERSION = "1.2";
   document.getElementById("appTitle").textContent = "BB v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], projecten: [], passen: [] }, photo: null, current: null, urls: [] };
@@ -79,8 +79,8 @@
       if (asData) res(c.toDataURL("image/jpeg", q)); else c.toBlob((b) => res(b), "image/jpeg", q);
     });
   }
-  async function onPhoto(e) {
-    const file = e.target.files && e.target.files[0]; if (!file) return;
+  function onPhoto(e) { const file = e.target.files && e.target.files[0]; if (file) usePhoto(file); }
+  async function usePhoto(file) {
     show($("formMsg"), "");
     try {
       const img = await loadImage(file);
@@ -95,6 +95,33 @@
   }
   $("photoCam").addEventListener("change", onPhoto);
   $("photoGal").addEventListener("change", onPhoto);
+
+  // ---------- webcam op de computer ----------
+  // Op een telefoon opent de Camera-knop de camera-app. Op een computer met muis
+  // doet de browser dat niet, dus daar gebruiken we de webcam in de pagina zelf.
+  const isDesktop = window.matchMedia && window.matchMedia("(pointer: fine)").matches && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  let camStream = null;
+  function stopCam() { if (camStream) camStream.getTracks().forEach((t) => t.stop()); camStream = null; $("camBox").hidden = true; }
+  if (isDesktop && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    document.querySelector('label[for="photoCam"]').addEventListener("click", async (e) => {
+      e.preventDefault();
+      show($("formMsg"), "");
+      try {
+        camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+        const v = $("camVideo"); v.srcObject = camStream; $("camBox").hidden = false; await v.play();
+      } catch (err) {
+        stopCam();
+        const name = err && err.name;
+        show($("formMsg"), name === "NotAllowedError" ? "De browser mag de webcam niet gebruiken. Sta de camera toe via het slotje links van het adres, of kies Uit galerij." : name === "NotFoundError" ? "Er is geen webcam gevonden op deze computer. Kies Uit galerij." : "De webcam kon niet worden gestart. Kies Uit galerij.", true);
+      }
+    });
+    $("camSnap").addEventListener("click", () => {
+      const v = $("camVideo"); if (!v.videoWidth) return;
+      const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext("2d").drawImage(v, 0, 0);
+      c.toBlob((b) => { stopCam(); if (b) usePhoto(new File([b], "webcam.jpg", { type: "image/jpeg" })); }, "image/jpeg", 0.9);
+    });
+    $("camCancel").addEventListener("click", stopCam);
+  }
 
   // ---------- OCR (Tesseract.js, wordt pas geladen als je erom vraagt) ----------
   const TESS_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
