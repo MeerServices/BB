@@ -1,7 +1,7 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "1.3";
+  const VERSION = "1.4";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], projecten: [], passen: [] }, photo: null, current: null, urls: [] };
@@ -201,7 +201,7 @@
     fillSelect($("f-pas"), L.passen, "Kies pas of rekening", "pas");
     fillFilter($("flt-project"), L.projecten, "Alle projecten");
     fillFilter($("flt-pas"), L.passen, "Alle passen");
-    document.querySelectorAll(".group").forEach((g) => {
+    document.querySelectorAll(".group[data-list]").forEach((g) => {
       const key = g.dataset.list, box = g.querySelector(".chips"); box.innerHTML = "";
       if (!L[key].length) { const s = document.createElement("span"); s.className = "hint"; s.textContent = "Nog leeg."; box.appendChild(s); }
       L[key].forEach((v) => {
@@ -218,7 +218,7 @@
     state.lijsten = { ...state.lijsten, [key]: arr }; renderLijsten();
     try { await putSetting("lijsten", state.lijsten); } catch (e) {}
   }
-  document.querySelectorAll(".group").forEach((g) => {
+  document.querySelectorAll(".group[data-list]").forEach((g) => {
     const key = g.dataset.list, inp = g.querySelector("input"), btn = g.querySelector(".addrow button");
     const add = () => { const v = inp.value.trim(); if (!v) return; if (!state.lijsten[key].includes(v)) saveList(key, [...state.lijsten[key], v].sort((a, b) => a.localeCompare(b, "nl"))); inp.value = ""; };
     btn.addEventListener("click", add);
@@ -332,11 +332,15 @@
   });
 
   // ---------- CSV-overzicht ----------
+  function csvText(list) {
+    const rows = [["Datum", "Winkel", "Bedrag", "Wie", "Project", "Pas of rekening", "Reden", "Foto"]]
+      .concat(list.map((b) => [nlDate(b.datum), b.winkel, (Number(b.bedrag) || 0).toFixed(2).replace(".", ","), b.wie, b.project, b.pas, b.reden, fotoName(b)]));
+    return "﻿" + rows.map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\r\n");
+  }
+  // Vaste bestandsnaam per bon, gebruikt in de export naar Dropbox en Drive.
+  const fotoName = (b) => `${b.datum || "datum"}-${slug(b.winkel)}-${String(b.id).slice(0, 8)}.jpg`;
   $("csvBtn").addEventListener("click", async () => {
-    const rows = [["Datum", "Winkel", "Bedrag", "Wie", "Project", "Pas of rekening", "Reden"]]
-      .concat(filtered().map((b) => [nlDate(b.datum), b.winkel, (Number(b.bedrag) || 0).toFixed(2).replace(".", ","), b.wie, b.project, b.pas, b.reden]));
-    const csv = "﻿" + rows.map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\r\n");
-    const file = new File([csv], `bonnen-${today()}.csv`, { type: "text/csv" });
+    const file = new File([csvText(filtered())], `bonnen-${today()}.csv`, { type: "text/csv" });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try { await navigator.share({ files: [file], title: "Overzicht bonnen" }); } catch (e) {}
     } else {
@@ -358,6 +362,15 @@
       $("status").textContent = "Opslag niet beschikbaar in deze browser";
     }
   })();
+
+  // Koppelpunt voor sync.js (export en import).
+  window.BB = {
+    all: async () => { await reload(); return state.bonnen.slice(); },
+    put: dbPut,
+    lijsten: () => ({ ...state.lijsten }),
+    setLijsten: async (l) => { state.lijsten = l; renderLijsten(); await putSetting("lijsten", l); },
+    getSetting, putSetting, reload, csvText, fotoName, today,
+  };
 
   if ("serviceWorker" in navigator && location.protocol === "https:") {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));

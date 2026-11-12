@@ -81,3 +81,7 @@ textarea{resize:vertical;min-height:64px}
 .cam{display:flex;flex-direction:column;gap:8px}
 .cam video{width:100%;border-radius:var(--r);background:#000;max-height:60vh;object-fit:contain}
 h1 .copy{font-size:12px;font-weight:500;color:var(--muted);letter-spacing:0}
+.svc{display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px solid var(--line)}
+.svc-name{font-weight:600;font-size:14px}
+.svc-name small{font-weight:500;color:var(--muted);margin-left:6px}
+label.btn.is-busy{opacity:.55;pointer-events:none}

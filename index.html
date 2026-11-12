@@ -16,7 +16,7 @@
 <body>
 <header>
   <div class="wrap">
-    <div class="brand"><h1 id="appTitle">BB <span id="appVer">v1.3</span> <small class="copy">©26 Vipware</small></h1><span class="status" id="status">Bewaard op dit apparaat</span></div>
+    <div class="brand"><h1 id="appTitle">BB <span id="appVer">v1.4</span> <small class="copy">©26 Vipware</small></h1><span class="status" id="status">Bewaard op dit apparaat</span></div>
     <nav role="tablist">
       <button role="tab" aria-selected="true" data-view="nieuw">Nieuwe bon</button>
       <button role="tab" aria-selected="false" data-view="bonnen">Bonnen</button>
@@ -73,6 +73,17 @@
     <ul class="list" id="list"></ul>
     <div class="empty" id="listEmpty">Nog geen bonnen. Maak een foto bij <b>Nieuwe bon</b> en tik op <b>Bon bewaren</b>.</div>
     <div class="btns"><button class="btn" id="csvBtn" type="button">Overzicht delen (CSV)</button></div>
+    <div class="group" id="syncBox">
+      <h3>Export en import</h3>
+      <p class="hint">Exporteren zet alle bonnen, de foto's en een overzicht (CSV) in je Dropbox of Google Drive. Importeren haalt bonnen op die nog niet op dit apparaat staan, bijvoorbeeld op een nieuwe telefoon.</p>
+      <div class="svc"><span class="svc-name">Dropbox <small id="dbxState"></small></span>
+        <div class="btns"><button class="btn" id="dbxExport" type="button">Exporteren</button><button class="btn" id="dbxImport" type="button">Importeren</button></div></div>
+      <div class="svc"><span class="svc-name">Google Drive <small id="gdState"></small></span>
+        <div class="btns"><button class="btn" id="gdExport" type="button">Exporteren</button><button class="btn" id="gdImport" type="button">Importeren</button></div></div>
+      <div class="svc"><span class="svc-name">Back-upbestand</span>
+        <div class="btns"><button class="btn" id="fileExport" type="button">Back-up opslaan</button><input type="file" id="fileImport" class="vh" accept="application/json,.json"><label for="fileImport" class="btn">Back-up inlezen</label></div></div>
+      <div id="syncMsg" class="msg" hidden></div>
+    </div>
   </section>
 
   <!-- DETAIL -->
@@ -107,6 +118,8 @@
     <p class="hint">De bonnen worden nu bewaard op dit apparaat. Opslaan in Google Drive en Dropbox komt in de volgende versie.</p>
   </section>
 </main>
+<script src="config.js"></script>
 <script src="app.js"></script>
+<script src="sync.js"></script>
 </body>
 </html>
