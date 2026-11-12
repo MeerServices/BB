@@ -1,14 +1,15 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "1.11";
+  const VERSION = "2.0";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", photo: null, current: null, urls: [] };
 
   // ---------- helpers ----------
-  const eur = (n) => "€ " + (Number(n) || 0).toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const nlDate = (iso) => { if (!iso) return "–"; const [y, m, d] = iso.split("-"); return d && m && y ? `${d}-${m}-${y}` : iso; };
+  const I = window.I18N, t = I.t;
+  const eur = (n) => I.eur(n);
+  const nlDate = (iso) => I.date(iso);
   const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
   const parseAmount = (s) => {
     if (s == null) return null; s = String(s).replace(/[€\s]/g, ""); if (!s) return null;
@@ -21,7 +22,7 @@
   const slug = (s) => (s || "onbekend").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
   // ---------- storage (IndexedDB) ----------
-  const DB_NAME = "bonnenbak", DB_VERSION = 2;
+  const DB_NAME = "bonnenbak", DB_VERSION = 3;
   let dbp = null;
   function openDb() {
     if (dbp) return dbp;
@@ -32,6 +33,7 @@
         if (!db.objectStoreNames.contains("bonnen")) db.createObjectStore("bonnen", { keyPath: "id" });
         if (!db.objectStoreNames.contains("instellingen")) db.createObjectStore("instellingen");
         if (!db.objectStoreNames.contains("statiegeld")) db.createObjectStore("statiegeld", { keyPath: "id" });
+        if (!db.objectStoreNames.contains("cadeau")) db.createObjectStore("cadeau", { keyPath: "id" });
       };
       r.onsuccess = () => res(r.result);
       r.onerror = () => rej(r.error);
@@ -56,11 +58,17 @@
     const all = await dbAll();
     state.bonnen = all.sort((a, b) => (b.aangemaakt || "").localeCompare(a.aangemaakt || ""));
     renderList();
+    setBadge("bonnen", state.bonnen.length);
   }
 
   // ---------- views ----------
-  const VIEWS = ["info", "kies", "nieuw", "bonnen", "statiegeld", "lijsten", "detail", "sgdetail"];
-  const PARENT = { detail: "bonnen", sgdetail: "statiegeld" };
+  const VIEWS = ["info", "kies", "nieuw", "bonnen", "statiegeld", "cadeau", "lijsten", "detail", "sgdetail", "cadetail"];
+  const PARENT = { detail: "bonnen", nieuw: "bonnen", sgdetail: "statiegeld", cadetail: "cadeau" };
+  // Tellers op de menuknoppen. warn = er verloopt binnenkort iets.
+  function setBadge(view, n, warn) {
+    const b = document.querySelector(`nav button[data-view="${view}"] .badge`); if (!b) return;
+    b.textContent = n > 99 ? "99+" : String(n || ""); b.hidden = !n; b.classList.toggle("warn", !!warn);
+  }
   function go(view) {
     VIEWS.forEach((v) => { const el = $("view-" + v); if (el) el.hidden = v !== view; });
     document.querySelectorAll("nav button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === (PARENT[view] || view))));
@@ -69,6 +77,8 @@
   }
   document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => go(b.dataset.view)));
   $("backBtn").addEventListener("click", () => go("bonnen"));
+  $("newBtn").addEventListener("click", () => go("nieuw"));
+  $("newBack").addEventListener("click", () => go("bonnen"));
   $("f-datum").value = today();
 
   // ---------- photo ----------
@@ -172,7 +182,7 @@
     try {
       const T = await loadTesseract();
       btn.textContent = "Bon wordt gelezen…";
-      const { data } = await T.recognize(state.photo.blob, "nld", { logger: (m) => { if (m.status === "recognizing text") btn.textContent = `Bon wordt gelezen… ${Math.round(m.progress * 100)}%`; } });
+      const { data } = await T.recognize(state.photo.blob, "nld+eng", { logger: (m) => { if (m.status === "recognizing text") btn.textContent = `Bon wordt gelezen… ${Math.round(m.progress * 100)}%`; } });
       const r = parseReceipt(data.text || "");
       const filled = [];
       if (r.winkel) { $("f-winkel").value = r.winkel; filled.push("winkel"); }
@@ -183,6 +193,12 @@
       show($("ocrMsg"), "De bon kon niet worden gelezen. Controleer je internetverbinding of vul de gegevens zelf in.", true);
     } finally { btn.disabled = false; btn.textContent = "Bon automatisch lezen"; }
   });
+
+  async function ocr(blob, onProgress) {
+    const T = await loadTesseract();
+    const { data } = await T.recognize(blob, "nld+eng", { logger: (m) => { if (m.status === "recognizing text" && onProgress) onProgress(Math.round(m.progress * 100)); } });
+    return data.text || "";
+  }
 
   // ---------- gebruikers en lijsten ----------
   // lijsten = { gebruikers: [naam], per: { naam: { projecten: [], passen: [] } } }
@@ -294,7 +310,7 @@
     try { await putSetting("gebruiker", name); } catch (e) {}
     renderLijsten();
   }
-  async function pickUser(name) { await setUser(name); go("nieuw"); }
+  async function pickUser(name) { await setUser(name); go("bonnen"); }
   $("userBtn").addEventListener("click", () => go("kies"));
   $("f-wie").addEventListener("click", () => go("kies"));
   $("whoAdd").addEventListener("click", async () => { const v = $("whoNew").value.trim(); if (!v) return; $("whoNew").value = ""; await addUser(v); await pickUser(v); });
@@ -368,8 +384,8 @@
 
   // ---------- detail en delen ----------
   const shareText = (b) => [
-    `Bon: ${b.winkel || "onbekende winkel"}`, `Datum: ${nlDate(b.datum)}`, `Bedrag: ${eur(b.bedrag)}`,
-    `Gekocht door: ${b.wie || "–"}`, `Project: ${b.project || "–"}`, `Betaald met: ${b.pas || "–"}`, `Reden: ${b.reden || "–"}`,
+    `${t("Bon")}: ${b.winkel || t("onbekende winkel")}`, `${t("Datum")}: ${nlDate(b.datum)}`, `${t("Bedrag")}: ${eur(b.bedrag)}`,
+    `${t("Gekocht door")}: ${b.wie || "–"}`, `${t("Project")}: ${b.project || "–"}`, `${t("Betaald met")}: ${b.pas || "–"}`, `${t("Reden")}: ${b.reden || "–"}`,
   ].join("\n");
   const fileName = (b) => `bon-${slug(b.winkel)}-${b.datum || "datum"}.jpg`;
   function openDetail(id) {
@@ -385,7 +401,7 @@
     slip.appendChild(document.createElement("hr")); line("TOTAAL", eur(b.bedrag), "tot");
     const text = shareText(b); $("d-text").textContent = text;
     $("waBtn").href = "https://wa.me/?text=" + encodeURIComponent(text);
-    $("mailBtn").href = "mailto:?subject=" + encodeURIComponent(`Bon ${b.winkel || ""} ${nlDate(b.datum)} - ${b.project || ""}`) + "&body=" + encodeURIComponent(text);
+    $("mailBtn").href = "mailto:?subject=" + encodeURIComponent(`${t("Bon")} ${b.winkel || ""} ${nlDate(b.datum)} - ${b.project || ""}`) + "&body=" + encodeURIComponent(text);
     const canFiles = !!(navigator.canShare && b.foto instanceof Blob && navigator.canShare({ files: [new File([b.foto], fileName(b), { type: "image/jpeg" })] }));
     $("shareBtn").textContent = canFiles ? "Delen met foto" : "Foto opslaan";
     $("shareHint").hidden = !canFiles;
@@ -451,12 +467,12 @@
   })();
 
   // ---------- info en bedankje ----------
-  const FB_START = "Bedankt voor BB!\n\nHet volgende zou interessant zijn om erbij te hebben of te verbeteren:\n";
+  const FB_START = t("Bedankt voor BB!") + "\n\n" + t("Het volgende zou interessant zijn om erbij te hebben of te verbeteren:") + "\n";
   let lastView = "nieuw";
   function updateFb() {
     const to = (window.BB_CONFIG && window.BB_CONFIG.feedbackEmail) || "";
     const body = $("fbText").value + `\n\n(BB v${VERSION}${state.user ? ", " + state.user : ""})`;
-    $("fbMail").href = "mailto:" + encodeURIComponent(to) + "?subject=" + encodeURIComponent(`Bedankje voor BB v${VERSION}`) + "&body=" + encodeURIComponent(body);
+    $("fbMail").href = "mailto:" + encodeURIComponent(to) + "?subject=" + encodeURIComponent(`${t("Bedankje voor BB")} v${VERSION}`) + "&body=" + encodeURIComponent(body);
     $("fbWa").href = "https://wa.me/" + ((window.BB_CONFIG && window.BB_CONFIG.feedbackWhatsapp) || "") + "?text=" + encodeURIComponent(body);
   }
   $("appTitle").addEventListener("click", () => {
@@ -475,7 +491,7 @@
     lijsten: () => JSON.parse(JSON.stringify(state.lijsten)),
     setLijsten: (l) => saveLijsten(l),
     normalize,
-    getSetting, putSetting, reload, csvText, fotoName, today, go, loadImage, toJpeg, slug, eur, nlDate, parseAmount,
+    getSetting, putSetting, reload, csvText, fotoName, today, go, setBadge, ocr, WINKELS, loadImage, toJpeg, slug, eur, nlDate, parseAmount,
     user: () => state.user,
     store: (name) => ({
       all: () => tx(name, "readonly", (s) => s.getAll()),

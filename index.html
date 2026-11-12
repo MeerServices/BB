@@ -11,17 +11,17 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=1.11">
+<link rel="stylesheet" href="style.css?v=2.0">
 </head>
 <body>
 <header>
   <div class="wrap">
-    <div class="brand"><h1><button class="titlebtn" id="appTitle" type="button" aria-label="Info over BB">BB <span id="appVer">v1.11</span> <small class="copy">©26 Vipware</small></button></h1><button class="userbtn" id="userBtn" type="button" aria-label="Andere gebruiker kiezen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><span id="userName">Kies wie</span></button></div>
+    <div class="brand"><h1><button class="titlebtn" id="appTitle" type="button" aria-label="Info over BB">BB <span id="appVer">v2.0</span> <small class="copy">©26 Vipware</small></button></h1><button class="userbtn" id="userBtn" type="button" aria-label="Andere gebruiker kiezen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><span id="userName">Kies wie</span></button></div>
     <nav role="tablist">
-      <button role="tab" aria-selected="true" data-view="nieuw">Nieuwe bon</button>
-      <button role="tab" aria-selected="false" data-view="bonnen">Bonnen</button>
-      <button role="tab" aria-selected="false" data-view="statiegeld">Statiegeld</button>
-      <button role="tab" aria-selected="false" data-view="lijsten">Lijsten</button>
+      <button role="tab" aria-selected="true" data-view="bonnen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 21z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span class="lbl">Bonnen</span><span class="badge" hidden></span></button>
+      <button role="tab" aria-selected="false" data-view="statiegeld"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v3.5c0 .6-.3 1.1-.7 1.5C8 9 7 10.5 7 12.5V19a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-6.5c0-2-1-3.5-2.3-4.5-.4-.4-.7-.9-.7-1.5V3"/><path d="M7 14h10"/></svg><span class="lbl">Statiegeld</span><span class="badge" hidden></span></button>
+      <button role="tab" aria-selected="false" data-view="cadeau"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7M12 8v13"/><path d="M12 8c-1.5-3-5-4-5.5-2S9 8 12 8zM12 8c1.5-3 5-4 5.5-2S15 8 12 8z"/></svg><span class="lbl">Cadeau</span><span class="badge" hidden></span></button>
+      <button role="tab" aria-selected="false" data-view="lijsten"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg><span class="lbl">Lijsten</span></button>
     </nav>
   </div>
 </header>
@@ -36,6 +36,13 @@
       <p class="info-text">Alle bonnen staan overzichtelijk bij elkaar, per project en per pas, met het totaalbedrag erbij. Een bon deel je in één tik via WhatsApp of e-mail, en het hele overzicht zet je zo in Excel, Dropbox of Google Drive.</p>
       <p class="info-text">Zo raak je geen bon meer kwijt en heb je je administratie altijd bij de hand.</p>
       <p class="hint">© 2026 Vipware. Alle rechten voorbehouden.</p>
+    </div>
+    <div class="group">
+      <h3>Taal</h3>
+      <div class="seg seg2" role="group" aria-label="Taal">
+        <button type="button" data-lang="nl" aria-pressed="true">Nederlands</button>
+        <button type="button" data-lang="en" aria-pressed="false">English (US)</button>
+      </div>
     </div>
     <div class="group">
       <h3>Stuur een bedankje</h3>
@@ -57,7 +64,8 @@
   </section>
 
   <!-- NIEUWE BON -->
-  <section id="view-nieuw">
+  <section id="view-nieuw" hidden>
+    <button class="back" id="newBack" type="button">← Terug naar bonnen</button>
     <div class="photo">
       <img id="photoPreview" alt="Foto van de bon" hidden>
       <div id="photoEmpty"><div class="big">Foto van de bon</div><div class="hint">Maak een foto met de camera of kies er een uit je galerij.</div></div>
@@ -94,14 +102,16 @@
   </section>
 
   <!-- BONNEN -->
-  <section id="view-bonnen" hidden>
+  <section id="view-bonnen">
+    <div class="warnbar" id="warnBar" hidden></div>
+    <button class="btn primary big-btn" id="newBtn" type="button"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Nieuwe bon</span></button>
     <div class="filters">
       <label>Project<select id="flt-project"></select></label>
       <label>Pas<select id="flt-pas"></select></label>
     </div>
     <div class="total"><span id="cnt">0 bonnen</span><b class="amount" id="sum">€ 0,00</b></div>
     <ul class="list" id="list"></ul>
-    <div class="empty" id="listEmpty">Nog geen bonnen. Maak een foto bij <b>Nieuwe bon</b> en tik op <b>Bon bewaren</b>.</div>
+    <div class="empty" id="listEmpty" data-i18n>Nog geen bonnen. Tik op <b>Nieuwe bon</b> om je eerste bon toe te voegen.</div>
     <div class="btns"><button class="btn" id="csvBtn" type="button"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>Overzicht delen (CSV)</button></div>
     <div class="group fold" data-fold="sync" id="syncBox">
       <h3>Export en import</h3>
@@ -129,7 +139,7 @@
       <a class="btn" id="waBtn" target="_blank" rel="noopener">WhatsApp (alleen tekst)</a>
       <a class="btn" id="mailBtn">E-mail (alleen tekst)</a>
     </div>
-    <p class="hint" id="shareHint">Met <b>Delen met foto</b> kies je zelf WhatsApp, Gmail of een andere app. De foto en de gegevens gaan dan samen mee.</p>
+    <p class="hint" id="shareHint" data-i18n>Met <b>Delen met foto</b> kies je zelf WhatsApp, Gmail of een andere app. De foto en de gegevens gaan dan samen mee.</p>
     <div class="copybox" id="d-text"></div>
     <div id="detailMsg" class="msg" hidden></div>
     <div class="btns"><button class="btn danger" id="delBtn" type="button">Bon verwijderen</button></div>
@@ -139,67 +149,11 @@
     </div>
   </section>
 
-  <!-- STATIEGELD -->
-  <section id="view-statiegeld" hidden>
-    <div class="sg-sum"><div><span class="hint">Open tegoed</span><b class="amount" id="sgOpen">€ 0,00</b></div><span class="hint" id="sgCount">0 bonnen</span></div>
-    <div class="pickers">
-      <button class="btn primary big-btn" id="sgScan" type="button"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8"/></svg>Scannen</button>
-      <input type="file" id="sgGal" class="vh" accept="image/*"><label for="sgGal" class="btn big-btn"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M21 16l-5.5-5.5L5 20"/></svg>Uit galerij</label>
-      <button class="btn big-btn" id="sgManual" type="button"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M9 10h.01M12 10h.01M15 10h.01M18 10h.01M7 14h10"/></svg>Typen</button>
-    </div>
-    <div class="cam" id="sgCamBox" hidden>
-      <div class="scanframe"><video id="sgVideo" playsinline muted></video><div class="scanline"></div></div>
-      <p class="hint" id="sgCamHint">Houd de streepjescode binnen het kader. Scannen gaat vanzelf.</p>
-      <div class="btns"><button class="btn" id="sgCamPhoto" type="button">Foto maken</button><button class="btn" id="sgCamCancel" type="button">Annuleren</button></div>
-    </div>
-    <div id="sgMsg" class="msg" hidden></div>
-
-    <form id="sgForm" class="group" hidden novalidate>
-      <h3>Nieuwe statiegeldbon</h3>
-      <img id="sgPreview" class="sg-photo" alt="Foto van de statiegeldbon" hidden>
-      <div class="barcode-box" id="sgBarcodeNew"></div>
-      <label>Nummer van de streepjescode<input id="sg-nummer" class="amount" inputmode="numeric" autocomplete="off"></label>
-      <div class="row">
-        <label>Bedrag (€)<input id="sg-bedrag" class="amount" inputmode="decimal" placeholder="0,00"></label>
-        <label>Winkel<input id="sg-winkel" list="dl-winkels" placeholder="bijv. Albert Heijn" autocomplete="off"></label>
-      </div>
-      <div class="row">
-        <label>Datum bon<input id="sg-datum" type="date"></label>
-        <label>Geldig tot<input id="sg-geldig" type="date"></label>
-      </div>
-      <div id="sgFormMsg" class="msg" hidden></div>
-      <div class="btns"><button class="btn primary big-btn" type="submit"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l3 3v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M8 3v5h7V3"/><path d="M9 15l2 2 4-4"/></svg><span>Statiegeldbon bewaren</span></button><button class="btn" id="sgFormCancel" type="button">Annuleren</button></div>
-    </form>
-
-    <div class="seg" role="group" aria-label="Filter">
-      <button type="button" data-sgf="open" aria-pressed="true">Open</button>
-      <button type="button" data-sgf="gebruikt" aria-pressed="false">Gebruikt</button>
-      <button type="button" data-sgf="verlopen" aria-pressed="false">Verlopen</button>
-      <button type="button" data-sgf="alle" aria-pressed="false">Alle</button>
-    </div>
-    <ul class="list" id="sgList"></ul>
-    <div class="empty" id="sgEmpty">Nog geen statiegeldbonnen. Tik op <b>Scannen</b> en houd de streepjescode voor de camera.</div>
-  </section>
-
-  <!-- STATIEGELD DETAIL -->
-  <section id="view-sgdetail" hidden>
-    <button class="back" id="sgBack" type="button">← Terug naar statiegeld</button>
-    <div class="sg-ticket">
-      <div class="sg-status" id="sgdStatus"></div>
-      <div class="barcode-box big" id="sgdBarcode"></div>
-      <div class="sg-amount amount" id="sgdBedrag"></div>
-      <div class="hint" id="sgdInfo"></div>
-    </div>
-    <label class="check"><input type="checkbox" id="sgdUsed"><span>Gebruikt <small id="sgdUsedOn"></small></span></label>
-    <label>Geldig tot<input id="sgdGeldig" type="date"></label>
-    <img id="sgdImg" class="detail-img" alt="Foto van de statiegeldbon" hidden>
-    <div id="sgdMsg" class="msg" hidden></div>
-    <div class="btns"><button class="btn danger" id="sgdDel" type="button">Verwijderen</button></div>
-    <div class="confirm" id="sgdConfirm" hidden>
-      <span>Deze statiegeldbon definitief verwijderen?</span>
-      <div class="btns"><button class="btn danger" id="sgdYes" type="button">Ja, verwijderen</button><button class="btn" id="sgdNo" type="button">Annuleren</button></div>
-    </div>
-  </section>
+  <!-- STATIEGELD en CADEAU: inhoud wordt door vouchers.js gemaakt -->
+  <section id="view-statiegeld" hidden></section>
+  <section id="view-sgdetail" hidden></section>
+  <section id="view-cadeau" hidden></section>
+  <section id="view-cadetail" hidden></section>
 
   <!-- LIJSTEN -->
   <section id="view-lijsten" hidden>
@@ -216,9 +170,11 @@
     <div class="group fold" data-fold="passen" data-list="passen"><h3>Passen en rekeningen van <span class="who"></span></h3><div class="chips"></div><div class="addrow"><input placeholder="bijv. Zakelijke pin ING" aria-label="Pas toevoegen"><button class="btn" type="button">Toevoegen</button></div></div>
   </section>
 </main>
-<script src="config.js?v=1.11"></script>
-<script src="app.js?v=1.11"></script>
-<script src="sync.js?v=1.11"></script>
-<script src="statiegeld.js?v=1.11"></script>
+<script src="i18n.js?v=2.0"></script>
+<script src="config.js?v=2.0"></script>
+<script src="app.js?v=2.0"></script>
+<script src="sync.js?v=2.0"></script>
+<script src="scan.js?v=2.0"></script>
+<script src="vouchers.js?v=2.0"></script>
 </body>
 </html>

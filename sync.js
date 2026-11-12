@@ -21,13 +21,14 @@
 
   async function buildBackup() {
     const bonnen = await window.BB.all();
-    const sg = window.BBSG ? (await window.BBSG.all()).map(window.BBSG.meta) : [];
-    return { app: "BB", formaat: 1, gemaakt: new Date().toISOString(), lijsten: window.BB.lijsten(), bonnen: bonnen.map(meta), statiegeld: sg };
+    const out = { app: "BB", formaat: 1, gemaakt: new Date().toISOString(), lijsten: window.BB.lijsten(), bonnen: bonnen.map(meta) };
+    for (const [k, m] of Object.entries(window.BBV || {})) out[k] = (await m.all()).map(m.meta);
+    return out;
   }
   // Alle foto's die mee moeten: van bonnen en van statiegeldbonnen.
   async function allPhotos() {
     const out = (await window.BB.all()).filter((b) => b.foto instanceof Blob).map((b) => ({ name: window.BB.fotoName(b), blob: b.foto }));
-    if (window.BBSG) (await window.BBSG.all()).filter((s) => s.foto instanceof Blob).forEach((s) => out.push({ name: window.BBSG.fotoName(s), blob: s.foto }));
+    for (const m of Object.values(window.BBV || {})) (await m.all()).filter((s) => s.foto instanceof Blob).forEach((s) => out.push({ name: m.fotoName(s), blob: s.foto }));
     return out;
   }
   // Voegt bonnen uit een back-up toe. getFoto(bon) levert de foto als Blob (of null).
@@ -51,13 +52,18 @@
     }
     await window.BB.setLijsten(merged);
     await window.BB.reload();
-    const sg = window.BBSG && Array.isArray(data.statiegeld) ? await window.BBSG.merge(data.statiegeld, getFoto) : 0;
-    return { n: nieuw.length, sg };
+    const extra = {};
+    for (const [k, m] of Object.entries(window.BBV || {})) extra[k] = Array.isArray(data[k]) ? await m.merge(data[k], getFoto) : 0;
+    return { n: nieuw.length, sg: extra.statiegeld || 0, ca: extra.cadeau || 0 };
   }
-  const doneText = ({ n, sg }) => {
-    if (!n && !sg) return "Klaar. Er waren geen nieuwe bonnen om te importeren.";
-    const parts = []; if (n) parts.push(n === 1 ? "1 bon" : `${n} bonnen`); if (sg) parts.push(sg === 1 ? "1 statiegeldbon" : `${sg} statiegeldbonnen`);
-    return `Klaar. ${parts.join(" en ")} geïmporteerd.`;
+  const t = window.I18N.t;
+  const doneText = ({ n, sg, ca }) => {
+    if (!n && !sg && !ca) return t("Klaar. Er waren geen nieuwe bonnen om te importeren.");
+    const parts = [];
+    if (n) parts.push(n === 1 ? t("1 bon") : t("{n} bonnen", { n }));
+    if (sg) parts.push(sg === 1 ? t("1 statiegeldbon") : t("{n} statiegeldbonnen", { n: sg }));
+    if (ca) parts.push(ca === 1 ? t("1 cadeaubon") : t("{n} cadeaubonnen", { n: ca }));
+    return t("Klaar. {x} geïmporteerd.", { x: parts.join(t(" en ")) });
   };
 
   // ---------- back-upbestand op dit apparaat ----------
@@ -67,7 +73,7 @@
       const all = await window.BB.all();
       const data = await buildBackup();
       for (let i = 0; i < all.length; i++) if (all[i].foto instanceof Blob) data.bonnen[i].fotoData = await blobToB64(all[i].foto);
-      if (window.BBSG) { const sg = await window.BBSG.all(); for (let i = 0; i < sg.length; i++) if (sg[i].foto instanceof Blob) data.statiegeld[i].fotoData = await blobToB64(sg[i].foto); }
+      for (const [k, m] of Object.entries(window.BBV || {})) { const list = await m.all(); for (let i = 0; i < list.length; i++) if (list[i].foto instanceof Blob) data[k][i].fotoData = await blobToB64(list[i].foto); }
       const file = new File([JSON.stringify(data)], `bb-backup-${window.BB.today()}.json`, { type: "application/json" });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try { await navigator.share({ files: [file], title: "BB back-up" }); msg("Back-up gedeeld."); } catch (e) { msg(""); }
