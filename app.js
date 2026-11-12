@@ -1,7 +1,7 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "1.8";
+  const VERSION = "1.9";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", photo: null, current: null, urls: [] };
@@ -59,7 +59,7 @@
 
   // ---------- views ----------
   function go(view) {
-    ["kies", "nieuw", "bonnen", "lijsten", "detail"].forEach((v) => ($("view-" + v).hidden = v !== view));
+    ["info", "kies", "nieuw", "bonnen", "lijsten", "detail"].forEach((v) => ($("view-" + v).hidden = v !== view));
     document.querySelectorAll("nav button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === view || (view === "detail" && b.dataset.view === "bonnen"))));
     window.scrollTo(0, 0);
   }
@@ -445,6 +445,24 @@
       go("kies");
     }
   })();
+
+  // ---------- info en bedankje ----------
+  const FB_START = "Bedankt voor BB!\n\nHet volgende zou interessant zijn om erbij te hebben of te verbeteren:\n";
+  let lastView = "nieuw";
+  function updateFb() {
+    const to = (window.BB_CONFIG && window.BB_CONFIG.feedbackEmail) || "";
+    const body = $("fbText").value + `\n\n(BB v${VERSION}${state.user ? ", " + state.user : ""})`;
+    $("fbMail").href = "mailto:" + encodeURIComponent(to) + "?subject=" + encodeURIComponent(`Bedankje voor BB v${VERSION}`) + "&body=" + encodeURIComponent(body);
+    $("fbWa").href = "https://wa.me/" + ((window.BB_CONFIG && window.BB_CONFIG.feedbackWhatsapp) || "") + "?text=" + encodeURIComponent(body);
+  }
+  $("appTitle").addEventListener("click", () => {
+    const cur = ["kies", "nieuw", "bonnen", "lijsten", "detail"].find((v) => !$("view-" + v).hidden); if (cur) lastView = cur;
+    $("infoVer").textContent = "v" + VERSION;
+    if (!$("fbText").value.trim()) $("fbText").value = FB_START;
+    updateFb(); go("info");
+  });
+  $("fbText").addEventListener("input", updateFb);
+  $("infoBack").addEventListener("click", () => go(lastView === "detail" ? "bonnen" : lastView));
 
   // Koppelpunt voor sync.js (export en import).
   window.BB = {
