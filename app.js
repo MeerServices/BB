@@ -1,7 +1,7 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "1.5";
+  const VERSION = "1.6";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", photo: null, current: null, urls: [] };
@@ -238,7 +238,7 @@
     const wl = $("whoList"); wl.innerHTML = "";
     L.gebruikers.forEach((g) => {
       const b = document.createElement("button"); b.type = "button"; b.className = "btn";
-      b.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>';
+      b.innerHTML = '<svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>';
       b.append(document.createTextNode(g)); if (g === state.user) b.setAttribute("aria-current", "true");
       b.onclick = () => pickUser(g); wl.appendChild(b);
     });
