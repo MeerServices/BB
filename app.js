@@ -1,10 +1,10 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "2.0";
+  const VERSION = "2.1";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
-  const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", photo: null, current: null, urls: [] };
+  const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", alle: false, photo: null, current: null, urls: [] };
 
   // ---------- helpers ----------
   const I = window.I18N, t = I.t;
@@ -58,7 +58,7 @@
     const all = await dbAll();
     state.bonnen = all.sort((a, b) => (b.aangemaakt || "").localeCompare(a.aangemaakt || ""));
     renderList();
-    setBadge("bonnen", state.bonnen.length);
+    setBadge("bonnen", mineBonnen().length);
   }
 
   // ---------- views ----------
@@ -241,8 +241,8 @@
   }
   function renderLijsten() {
     const L = state.lijsten, M = mine();
-    $("userName").textContent = state.user || "Kies wie";
-    $("userBtn").replaceChild(avatar(state.user, "av-sm"), $("userBtn").firstElementChild);
+    $("userName").textContent = state.alle ? t("Iedereen") : state.user || t("Kies wie");
+    $("userBtn").replaceChild(state.alle ? groupIcon("av-sm") : avatar(state.user, "av-sm"), $("userBtn").firstElementChild);
     $("meFoto").replaceChildren(avatar(state.user, "av-lg"));
     $("meFotoDel").hidden = !M.foto;
     $("fotoGroup").hidden = !state.user;
@@ -260,11 +260,21 @@
     });
     // gebruikerskeuze
     const wl = $("whoList"); wl.innerHTML = "";
+    if (L.gebruikers.length) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "btn who-all";
+      b.append(groupIcon("av-md"), document.createTextNode(t("Iedereen"))); if (state.alle) b.setAttribute("aria-current", "true");
+      b.onclick = () => pickAll(); wl.appendChild(b);
+    }
     L.gebruikers.forEach((g) => {
       const b = document.createElement("button"); b.type = "button"; b.className = "btn";
-      b.append(avatar(g, "av-md"), document.createTextNode(g)); if (g === state.user) b.setAttribute("aria-current", "true");
+      b.append(avatar(g, "av-md"), document.createTextNode(g)); if (!state.alle && g === state.user) b.setAttribute("aria-current", "true");
       b.onclick = () => pickUser(g); wl.appendChild(b);
     });
+  }
+  function groupIcon(cls) {
+    const d = document.createElement("span"); d.className = "av av-init av-all " + cls; d.setAttribute("aria-hidden", "true");
+    d.innerHTML = '<svg viewBox="0 0 24 24" width="60%" height="60%" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.2c2.8.3 5 2.6 5 5.8"/></svg>';
+    return d;
   }
   // Pasfoto: rond plaatje met de foto, of de beginletters als er nog geen foto is.
   function avatar(name, cls) {
@@ -305,12 +315,19 @@
     await saveLijsten({ gebruikers: state.lijsten.gebruikers.filter((g) => g !== name), per });
     if (state.user === name) { state.user = ""; await setUser(""); go("kies"); }
   }
+  async function setAlle(on) {
+    state.alle = on; remember("alle", on ? "1" : "");
+    try { await putSetting("alle", on); } catch (e) {}
+  }
   async function setUser(name) {
     state.user = name; remember("gebruiker", name);
     try { await putSetting("gebruiker", name); } catch (e) {}
-    renderLijsten();
+    renderLijsten(); renderList(); setBadge("bonnen", mineBonnen().length);
+    document.dispatchEvent(new CustomEvent("bb:user"));
   }
-  async function pickUser(name) { await setUser(name); go("bonnen"); }
+  async function pickUser(name) { await setAlle(false); await setUser(name); go("bonnen"); }
+  // Iedereen: alle bonnen van alle gebruikers. Nieuwe bonnen komen op naam van de laatst gekozen gebruiker.
+  async function pickAll() { await setAlle(true); await setUser(state.user || state.lijsten.gebruikers[0] || ""); go("bonnen"); }
   $("userBtn").addEventListener("click", () => go("kies"));
   $("f-wie").addEventListener("click", () => go("kies"));
   $("whoAdd").addEventListener("click", async () => { const v = $("whoNew").value.trim(); if (!v) return; $("whoNew").value = ""; await addUser(v); await pickUser(v); });
@@ -358,11 +375,14 @@
   });
 
   // ---------- lijst ----------
-  const filtered = () => { const p = $("flt-project").value, k = $("flt-pas").value; return state.bonnen.filter((b) => (!p || b.project === p) && (!k || b.pas === k)); };
+  // Per gebruiker: je ziet alleen je eigen bonnen, behalve als rechtsboven "Iedereen" gekozen is.
+  const visible = (wie) => state.alle || !state.user || !wie || wie === state.user;
+  const mineBonnen = () => state.bonnen.filter((b) => visible(b.wie));
+  const filtered = () => { const p = $("flt-project").value, k = $("flt-pas").value; return mineBonnen().filter((b) => (!p || b.project === p) && (!k || b.pas === k)); };
   function renderList() {
     const items = filtered(), ul = $("list"); ul.innerHTML = "";
-    $("listEmpty").hidden = state.bonnen.length > 0;
-    $("csvBtn").hidden = state.bonnen.length === 0;
+    $("listEmpty").hidden = mineBonnen().length > 0;
+    $("csvBtn").hidden = items.length === 0;
     $("cnt").textContent = items.length === 1 ? "1 bon" : items.length + " bonnen";
     $("sum").textContent = eur(items.reduce((s, b) => s + (Number(b.bedrag) || 0), 0));
     items.forEach((b) => {
@@ -456,9 +476,11 @@
       state.lijsten = normalize(await getSetting("lijsten"));
       const u = (await getSetting("gebruiker")) || recall("gebruiker") || "";
       state.user = state.lijsten.gebruikers.includes(u) ? u : "";
+      state.alle = !!state.user && !!((await getSetting("alle")) ?? recall("alle"));
       await reload();
       renderLijsten();
-      if (!state.user) go("kies");
+      document.dispatchEvent(new CustomEvent("bb:user"));
+      if (!state.user && !state.alle) go("kies");
       if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
     } catch (e) {
       renderLijsten(); renderList();
@@ -475,6 +497,7 @@
     $("fbMail").href = "mailto:" + encodeURIComponent(to) + "?subject=" + encodeURIComponent(`${t("Bedankje voor BB")} v${VERSION}`) + "&body=" + encodeURIComponent(body);
     $("fbWa").href = "https://wa.me/" + ((window.BB_CONFIG && window.BB_CONFIG.feedbackWhatsapp) || "") + "?text=" + encodeURIComponent(body);
   }
+  document.querySelectorAll(".help[lang]").forEach((h) => (h.hidden = h.lang !== I.lang));
   $("appTitle").addEventListener("click", () => {
     const cur = VIEWS.filter((v) => v !== "info").find((v) => !$("view-" + v).hidden); if (cur) lastView = cur;
     $("infoVer").textContent = "v" + VERSION;
@@ -493,6 +516,8 @@
     normalize,
     getSetting, putSetting, reload, csvText, fotoName, today, go, setBadge, ocr, WINKELS, loadImage, toJpeg, slug, eur, nlDate, parseAmount,
     user: () => state.user,
+    alle: () => state.alle,
+    visible,
     store: (name) => ({
       all: () => tx(name, "readonly", (s) => s.getAll()),
       put: (v) => tx(name, "readwrite", (s) => s.put(v)),

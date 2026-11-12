@@ -23,7 +23,7 @@
     "Je bericht": "Your message", "E-mail": "Email",
     "Bedankt voor BB!": "Thanks for BB!", "Het volgende zou interessant zijn om erbij te hebben of te verbeteren:": "The following would be great to add or improve:", "Bedankje voor BB": "Thank-you for BB",
     // gebruiker
-    "Wie ben jij?": "Who are you?", "BB onthoudt je keuze. Je kunt later rechtsboven een andere gebruiker kiezen.": "BB remembers your choice. You can pick another user later, top right.",
+    "Wie ben jij?": "Who are you?", "BB onthoudt je keuze. Kies Iedereen om de bonnen van alle gebruikers te zien. Je kunt dit later rechtsboven wijzigen.": "BB remembers your choice. Choose Everyone to see the receipts of all users. You can change this later, top right.", "Iedereen": "Everyone",
     "Nieuwe naam": "New name", "Toevoegen": "Add",
     // nieuwe bon
     "Nieuwe bon": "New receipt", "Foto van de bon": "Receipt photo", "Maak een foto met de camera of kies er een uit je galerij.": "Take a photo with the camera or pick one from your gallery.",

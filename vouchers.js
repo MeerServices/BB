@@ -162,8 +162,10 @@
       }
       return { key: "open", label: t("Open"), cls: "" };
     }
-    const openItems = () => st.items.filter((s) => status(s).key === "open");
-    const soonItems = () => st.items.filter((s) => status(s).soon);
+    // Alleen de bonnen van de gekozen gebruiker, of alles bij "Iedereen".
+    const mine = () => st.items.filter((s) => BB.visible(s.wie));
+    const openItems = () => mine().filter((s) => status(s).key === "open");
+    const soonItems = () => mine().filter((s) => status(s).soon);
 
     // --- formulier ---
     const f = (x) => el("-" + x);
@@ -331,10 +333,11 @@
       el("Warn").innerHTML = soon.length ? `<button type="button">${ICONS.warn}<span>${esc(soon.length === 1 ? t("1 {x} verloopt binnen {d} dagen.", { x: t(K.one), d: K.warnDays }) : t("{n} {x} verlopen binnen {d} dagen.", { n: soon.length, x: t(K.many), d: K.warnDays }))}</span></button>` : "";
       const b = el("Warn").querySelector("button"); if (b) b.onclick = () => setFilter("open");
       el("NotifRow").hidden = !("Notification" in window) || Notification.permission !== "default" || !st.items.length;
-      const list = st.filter === "alle" ? st.items : st.items.filter((s) => status(s).key === st.filter);
+      const all = mine();
+      const list = st.filter === "alle" ? all : all.filter((s) => status(s).key === st.filter);
       const ul = el("List"); ul.innerHTML = "";
-      el("Empty").hidden = st.items.length > 0;
-      if (st.items.length && !list.length) { const li = document.createElement("li"); li.className = "hint"; li.textContent = t("Niets in deze lijst."); ul.appendChild(li); }
+      el("Empty").hidden = all.length > 0;
+      if (all.length && !list.length) { const li = document.createElement("li"); li.className = "hint"; li.textContent = t("Niets in deze lijst."); ul.appendChild(li); }
       list.forEach((s) => {
         const ss = status(s);
         const li = document.createElement("li"), c = document.createElement("button"); c.type = "button"; c.className = "card" + (s.gebruikt ? " is-used" : "");
@@ -345,6 +348,7 @@
         const s1 = document.createElement("span"); s1.className = "amount"; s1.textContent = s.nummer || s.bonNr || "–";
         const s2 = document.createElement("span"); const pill = document.createElement("span"); pill.className = "pill " + ss.cls; pill.textContent = ss.label; s2.appendChild(pill);
         if (s.geldigTot && !s.gebruikt) s2.append(" " + t("t/m") + " " + I.date(s.geldigTot));
+        if (BB.alle() && s.wie) s2.append(" · " + s.wie);
         tx.append(n, s1, s2);
         const a = document.createElement("div"); a.className = "a amount"; a.textContent = s.bedrag == null ? "–" : I.eur(s.bedrag);
         c.append(th, tx, a); c.addEventListener("click", () => openDetail(s.id)); li.appendChild(c); ul.appendChild(li);
@@ -436,7 +440,7 @@
 
     // --- voor export en import ---
     return {
-      K, load, status, openItems, soonItems, fotoName,
+      K, load, render, status, openItems, soonItems, fotoName,
       all: () => store.all(),
       meta: (s) => { const { foto, ...rest } = s; return { ...rest, fotoBestand: fotoName(s) }; },
       async merge(list, getFoto) {
@@ -491,6 +495,7 @@
 
   window.BBV = { statiegeld: makeModule(KINDS.statiegeld), cadeau: makeModule(KINDS.cadeau) };
   window.BBSG = window.BBV.statiegeld; // oude naam, voor sync.js
+  document.addEventListener("bb:user", () => { for (const m of Object.values(window.BBV)) m.render(); Warnings.update(); });
   Promise.all(Object.values(window.BBV).map((m) => m.load())).then(() => { Warnings.update(); Warnings.notify(false); });
   document.addEventListener("bb:view", (e) => { const m = Object.values(window.BBV).find((x) => x.K.view === e.detail); if (m) m.load(); });
 })();

@@ -171,3 +171,8 @@ nav .badge.warn{background:var(--danger);color:#fff}
 .slip .ln.col{flex-direction:column;align-items:flex-start;gap:2px}
 .slip .ln.col span:last-child{text-align:left}
 .pre{white-space:pre-wrap;text-align:left}
+.help h3{margin:18px 0 6px;font-size:16px}
+.help p,.help li{line-height:1.5}
+.help ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.av-all{background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center}
+.who-all{font-weight:600}
