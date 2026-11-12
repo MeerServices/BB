@@ -1,7 +1,7 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "2.2";
+  const VERSION = "2.3";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", alle: false, photo: null, current: null, urls: [] };
@@ -89,8 +89,8 @@
   }
   document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => go(b.dataset.view)));
   $("backBtn").addEventListener("click", () => go("bonnen"));
-  $("newBtn").addEventListener("click", () => go("nieuw"));
-  $("newBack").addEventListener("click", () => go("bonnen"));
+  $("newBtn").addEventListener("click", () => { if (state.editing) stopEdit(); go("nieuw"); });
+  $("newBack").addEventListener("click", () => { if (state.editing) { const id = state.editing.id; stopEdit(); openDetail(id); } else go("bonnen"); });
   $("f-datum").value = today();
 
   // ---------- photo ----------
@@ -249,10 +249,10 @@
     if (!items.length) { const s = document.createElement("span"); s.className = "hint"; s.textContent = "Nog leeg."; box.appendChild(s); }
     items.forEach((v) => {
       const c = document.createElement("span"); c.className = "chip";
-      const t = document.createElement("span"); t.textContent = v;
+      const tx = document.createElement("span"); tx.textContent = v;
       const x = document.createElement("button"); x.type = "button"; x.setAttribute("aria-label", v + " verwijderen"); x.textContent = "×";
       x.onclick = async () => { if (await ask(t("{x} wordt uit de lijst verwijderd.", { x: v }))) onRemove(v); };
-      c.append(t, x); box.appendChild(c);
+      c.append(tx, x); box.appendChild(c);
     });
   }
   function renderLijsten() {
@@ -262,7 +262,7 @@
     $("meFoto").replaceChildren(avatar(state.user, "av-lg"));
     $("meFotoDel").hidden = !M.foto;
     $("fotoGroup").hidden = !state.user;
-    $("f-wie").textContent = state.user || "Kies wie";
+    $("f-wie").textContent = (state.editing && state.editing.wie) || state.user || t("Kies wie");
     fillSelect($("f-project"), M.projecten, "Kies project", "project-" + state.user);
     fillSelect($("f-pas"), M.passen, "Kies pas of rekening", "pas-" + state.user);
     fillFilter($("flt-project"), allOf("projecten"), "Alle projecten");
@@ -364,30 +364,57 @@
     state.photo = null; $("photoCam").value = ""; $("photoGal").value = "";
     $("photoPreview").hidden = true; $("photoEmpty").hidden = false; $("ocrRow").hidden = true; show($("ocrMsg"), ""); $("f-memo").value = "";
   }
+  // ---------- bon bewerken: hetzelfde formulier, ingevuld met de bestaande bon ----------
+  function addOption(sel, v) { if (v && ![...sel.options].some((o) => o.value === v)) { const o = document.createElement("option"); o.value = v; o.textContent = v; sel.appendChild(o); } sel.value = v || ""; }
+  function startEdit(b) {
+    state.editing = b; resetPhoto(); renderLijsten();
+    $("f-winkel").value = b.winkel || ""; $("f-datum").value = b.datum || today();
+    $("f-bedrag").value = b.bedrag == null ? "" : I.lang === "en" ? Number(b.bedrag).toFixed(2) : Number(b.bedrag).toFixed(2).replace(".", ",");
+    addOption($("f-project"), b.project); addOption($("f-pas"), b.pas);
+    $("f-reden").value = b.reden || ""; $("f-memo").value = b.memo || "";
+    if (b.foto instanceof Blob) { state.photo = { blob: b.foto, thumb: b.thumb }; const u = URL.createObjectURL(b.foto); state.urls.push(u); $("photoPreview").src = u; }
+    else if (b.thumb) $("photoPreview").src = b.thumb;
+    if (b.foto || b.thumb) { $("photoPreview").hidden = false; $("photoEmpty").hidden = true; $("ocrRow").hidden = !state.photo; }
+    $("formTitle").hidden = false; $("newBack").textContent = "← " + t("Terug naar de bon");
+    $("saveLbl").textContent = t("Wijzigingen bewaren"); $("editCancel").hidden = false; show($("formMsg"), "");
+    go("nieuw");
+  }
+  function stopEdit() {
+    state.editing = null; $("form").reset(); $("f-datum").value = today(); resetPhoto(); renderLijsten();
+    $("formTitle").hidden = true; $("newBack").textContent = "← " + t("Terug naar bonnen");
+    $("saveLbl").textContent = t("Bon bewaren"); $("editCancel").hidden = true;
+  }
+  $("editBtn").addEventListener("click", () => { if (state.current) startEdit(state.current); });
+  $("editCancel").addEventListener("click", () => $("newBack").click());
+
   $("form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const msg = $("formMsg");
     const bedrag = parseAmount($("f-bedrag").value);
+    const ed = state.editing;
     const bon = {
-      id: (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)),
+      ...(ed || {}),
+      id: ed ? ed.id : (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)),
       winkel: $("f-winkel").value.trim(), datum: $("f-datum").value || today(), bedrag,
-      wie: state.user, project: $("f-project").value, pas: $("f-pas").value, reden: $("f-reden").value.trim(), memo: $("f-memo").value.trim(),
-      aangemaakt: new Date().toISOString(),
+      wie: ed ? ed.wie || state.user : state.user, project: $("f-project").value, pas: $("f-pas").value, reden: $("f-reden").value.trim(), memo: $("f-memo").value.trim(),
+      aangemaakt: ed ? ed.aangemaakt : new Date().toISOString(),
     };
+    if (ed) bon.gewijzigd = new Date().toISOString();
     const missing = [];
-    if (!state.photo) missing.push("foto"); if (bedrag == null) missing.push("bedrag");
+    if (!state.photo && !ed) missing.push("foto"); if (bedrag == null) missing.push("bedrag");
     if (!bon.wie) missing.push("wie"); if (!bon.project) missing.push("project"); if (!bon.pas) missing.push("pas");
     if (missing.length) { show(msg, "Nog nodig: " + missing.join(", ") + ".", true); return; }
     const btn = $("saveBtn"), lbl = btn.querySelector("span"); btn.disabled = true; lbl.textContent = "Bewaren…"; show(msg, "");
     try {
-      bon.foto = state.photo.blob; bon.thumb = state.photo.thumb;
+      if (state.photo) { bon.foto = state.photo.blob; bon.thumb = state.photo.thumb; }
       await dbPut(bon);
+      if (ed) { stopEdit(); await reload(); openDetail(bon.id); return; }
       $("form").reset(); $("f-datum").value = today(); renderLijsten(); resetPhoto();
       await reload();
       show(msg, "Bon bewaard.");
     } catch (err) {
       show(msg, "Bewaren is mislukt. Misschien is de opslag van je telefoon vol.", true);
-    } finally { btn.disabled = false; lbl.textContent = "Bon bewaren"; }
+    } finally { btn.disabled = false; lbl.textContent = state.editing ? t("Wijzigingen bewaren") : t("Bon bewaren"); }
   });
 
   // ---------- lijst ----------

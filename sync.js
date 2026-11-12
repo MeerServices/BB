@@ -34,7 +34,12 @@
   // Voegt bonnen uit een back-up toe. getFoto(bon) levert de foto als Blob (of null).
   async function mergeBackup(data, getFoto, progress) {
     if (!data || data.app !== "BB" || !Array.isArray(data.bonnen)) throw new Error("geen-backup");
-    const local = new Set((await window.BB.all()).map((b) => b.id));
+    const localList = await window.BB.all(), local = new Set(localList.map((b) => b.id));
+    // Bewerkte bonnen: de nieuwste versie wint (foto blijft die van dit toestel).
+    for (const b of data.bonnen) {
+      const mine = b && b.id && localList.find((x) => x.id === b.id);
+      if (mine && (b.gewijzigd || "") > (mine.gewijzigd || "")) { const { fotoBestand, fotoData, ...rest } = b; await window.BB.put({ ...mine, ...rest, foto: mine.foto, thumb: mine.thumb }); }
+    }
     const nieuw = data.bonnen.filter((b) => b && b.id && !local.has(b.id));
     let i = 0;
     for (const b of nieuw) {

@@ -107,6 +107,7 @@
     "{x} wordt uit de lijst verwijderd.": "{x} will be removed from the list.", "Je pasfoto wordt verwijderd.": "Your photo will be removed.",
     "Deze {x} wordt definitief verwijderd.": "This {x} will be permanently deleted.",
     "Alle tekst die van de bon gelezen wordt, komt hier. Je kunt hem aanpassen.": "All text read from the receipt goes here. You can edit it.",
+    "Bon bewerken": "Edit receipt", "Terug naar de bon": "Back to receipt", "Terug naar bonnen": "Back to receipts", "Wijzigingen bewaren": "Save changes",
     "1 open bon": "1 open voucher", "{n} open bonnen": "{n} open vouchers",
     "1 {x} verloopt binnen {d} dagen.": "1 {x} expires within {d} days.", "{n} {x} verlopen binnen {d} dagen.": "{n} {x} expire within {d} days.",
     "Niets in deze lijst.": "Nothing in this list.", "Nummer": "Number", "Status": "Status", "door {x}": "by {x}", "op {d}": "on {d}", "t/m": "until",
