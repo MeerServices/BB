@@ -1,7 +1,7 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "1.10";
+  const VERSION = "1.11";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", photo: null, current: null, urls: [] };
@@ -21,7 +21,7 @@
   const slug = (s) => (s || "onbekend").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
   // ---------- storage (IndexedDB) ----------
-  const DB_NAME = "bonnenbak", DB_VERSION = 1;
+  const DB_NAME = "bonnenbak", DB_VERSION = 2;
   let dbp = null;
   function openDb() {
     if (dbp) return dbp;
@@ -31,6 +31,7 @@
         const db = r.result;
         if (!db.objectStoreNames.contains("bonnen")) db.createObjectStore("bonnen", { keyPath: "id" });
         if (!db.objectStoreNames.contains("instellingen")) db.createObjectStore("instellingen");
+        if (!db.objectStoreNames.contains("statiegeld")) db.createObjectStore("statiegeld", { keyPath: "id" });
       };
       r.onsuccess = () => res(r.result);
       r.onerror = () => rej(r.error);
@@ -58,10 +59,13 @@
   }
 
   // ---------- views ----------
+  const VIEWS = ["info", "kies", "nieuw", "bonnen", "statiegeld", "lijsten", "detail", "sgdetail"];
+  const PARENT = { detail: "bonnen", sgdetail: "statiegeld" };
   function go(view) {
-    ["info", "kies", "nieuw", "bonnen", "lijsten", "detail"].forEach((v) => ($("view-" + v).hidden = v !== view));
-    document.querySelectorAll("nav button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === view || (view === "detail" && b.dataset.view === "bonnen"))));
+    VIEWS.forEach((v) => { const el = $("view-" + v); if (el) el.hidden = v !== view; });
+    document.querySelectorAll("nav button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === (PARENT[view] || view))));
     window.scrollTo(0, 0);
+    document.dispatchEvent(new CustomEvent("bb:view", { detail: view }));
   }
   document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => go(b.dataset.view)));
   $("backBtn").addEventListener("click", () => go("bonnen"));
@@ -456,13 +460,13 @@
     $("fbWa").href = "https://wa.me/" + ((window.BB_CONFIG && window.BB_CONFIG.feedbackWhatsapp) || "") + "?text=" + encodeURIComponent(body);
   }
   $("appTitle").addEventListener("click", () => {
-    const cur = ["kies", "nieuw", "bonnen", "lijsten", "detail"].find((v) => !$("view-" + v).hidden); if (cur) lastView = cur;
+    const cur = VIEWS.filter((v) => v !== "info").find((v) => !$("view-" + v).hidden); if (cur) lastView = cur;
     $("infoVer").textContent = "v" + VERSION;
     if (!$("fbText").value.trim()) $("fbText").value = FB_START;
     updateFb(); go("info");
   });
   $("fbText").addEventListener("input", updateFb);
-  $("infoBack").addEventListener("click", () => go(lastView === "detail" ? "bonnen" : lastView));
+  $("infoBack").addEventListener("click", () => go(PARENT[lastView] || lastView));
 
   // Koppelpunt voor sync.js (export en import).
   window.BB = {
@@ -471,8 +475,30 @@
     lijsten: () => JSON.parse(JSON.stringify(state.lijsten)),
     setLijsten: (l) => saveLijsten(l),
     normalize,
-    getSetting, putSetting, reload, csvText, fotoName, today,
+    getSetting, putSetting, reload, csvText, fotoName, today, go, loadImage, toJpeg, slug, eur, nlDate, parseAmount,
+    user: () => state.user,
+    store: (name) => ({
+      all: () => tx(name, "readonly", (s) => s.getAll()),
+      put: (v) => tx(name, "readwrite", (s) => s.put(v)),
+      del: (id) => tx(name, "readwrite", (s) => s.delete(id)),
+    }),
   };
+  document.dispatchEvent(new Event("bb:ready"));
+
+  // ---------- uitklapmenu's ----------
+  // Een blok met class "fold" klapt in en uit door op de kop te tikken. De stand wordt onthouden.
+  document.querySelectorAll(".group.fold").forEach((g) => {
+    const h = g.querySelector(":scope > h3"), key = "fold-" + g.dataset.fold;
+    const b = document.createElement("button"); b.type = "button"; b.className = "fold-btn";
+    const lab = document.createElement("span"); lab.className = "fold-label";
+    while (h.firstChild) lab.appendChild(h.firstChild);
+    b.appendChild(lab);
+    b.insertAdjacentHTML("beforeend", '<svg class="ic chev" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>');
+    h.appendChild(b);
+    const set = (open) => { g.classList.toggle("closed", !open); b.setAttribute("aria-expanded", String(open)); };
+    set(recall(key) === "1");
+    b.addEventListener("click", () => { const open = g.classList.contains("closed"); set(open); remember(key, open ? "1" : "0"); });
+  });
 
   if ("serviceWorker" in navigator && location.protocol === "https:") {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));

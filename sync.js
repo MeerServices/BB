@@ -21,7 +21,14 @@
 
   async function buildBackup() {
     const bonnen = await window.BB.all();
-    return { app: "BB", formaat: 1, gemaakt: new Date().toISOString(), lijsten: window.BB.lijsten(), bonnen: bonnen.map(meta) };
+    const sg = window.BBSG ? (await window.BBSG.all()).map(window.BBSG.meta) : [];
+    return { app: "BB", formaat: 1, gemaakt: new Date().toISOString(), lijsten: window.BB.lijsten(), bonnen: bonnen.map(meta), statiegeld: sg };
+  }
+  // Alle foto's die mee moeten: van bonnen en van statiegeldbonnen.
+  async function allPhotos() {
+    const out = (await window.BB.all()).filter((b) => b.foto instanceof Blob).map((b) => ({ name: window.BB.fotoName(b), blob: b.foto }));
+    if (window.BBSG) (await window.BBSG.all()).filter((s) => s.foto instanceof Blob).forEach((s) => out.push({ name: window.BBSG.fotoName(s), blob: s.foto }));
+    return out;
   }
   // Voegt bonnen uit een back-up toe. getFoto(bon) levert de foto als Blob (of null).
   async function mergeBackup(data, getFoto, progress) {
@@ -44,9 +51,14 @@
     }
     await window.BB.setLijsten(merged);
     await window.BB.reload();
-    return nieuw.length;
+    const sg = window.BBSG && Array.isArray(data.statiegeld) ? await window.BBSG.merge(data.statiegeld, getFoto) : 0;
+    return { n: nieuw.length, sg };
   }
-  const doneText = (n) => n === 0 ? "Klaar. Er waren geen nieuwe bonnen om te importeren." : n === 1 ? "Klaar. 1 bon geïmporteerd." : `Klaar. ${n} bonnen geïmporteerd.`;
+  const doneText = ({ n, sg }) => {
+    if (!n && !sg) return "Klaar. Er waren geen nieuwe bonnen om te importeren.";
+    const parts = []; if (n) parts.push(n === 1 ? "1 bon" : `${n} bonnen`); if (sg) parts.push(sg === 1 ? "1 statiegeldbon" : `${sg} statiegeldbonnen`);
+    return `Klaar. ${parts.join(" en ")} geïmporteerd.`;
+  };
 
   // ---------- back-upbestand op dit apparaat ----------
   $("fileExport").addEventListener("click", async () => {
@@ -55,6 +67,7 @@
       const all = await window.BB.all();
       const data = await buildBackup();
       for (let i = 0; i < all.length; i++) if (all[i].foto instanceof Blob) data.bonnen[i].fotoData = await blobToB64(all[i].foto);
+      if (window.BBSG) { const sg = await window.BBSG.all(); for (let i = 0; i < sg.length; i++) if (sg[i].foto instanceof Blob) data.statiegeld[i].fotoData = await blobToB64(sg[i].foto); }
       const file = new File([JSON.stringify(data)], `bb-backup-${window.BB.today()}.json`, { type: "application/json" });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try { await navigator.share({ files: [file], title: "BB back-up" }); msg("Back-up gedeeld."); } catch (e) { msg(""); }
@@ -133,9 +146,9 @@
   async function dropboxExport(tok) {
     const all = await window.BB.all();
     const have = await DBX.list(tok, "/fotos");
-    const todo = all.filter((b) => b.foto instanceof Blob && !have.has(window.BB.fotoName(b)));
+    const todo = (await allPhotos()).filter((f) => !have.has(f.name));
     let i = 0;
-    for (const b of todo) { msg(`Foto's uploaden naar Dropbox… ${++i} van ${todo.length}`); await DBX.upload(tok, "/fotos/" + window.BB.fotoName(b), b.foto); }
+    for (const f of todo) { msg(`Foto's uploaden naar Dropbox… ${++i} van ${todo.length}`); await DBX.upload(tok, "/fotos/" + f.name, f.blob); }
     msg("Overzicht opslaan in Dropbox…");
     await DBX.upload(tok, "/bonnen.csv", new Blob([window.BB.csvText(all)], { type: "text/csv" }));
     await DBX.upload(tok, "/backup.json", new Blob([JSON.stringify(await buildBackup())], { type: "application/json" }));
@@ -220,9 +233,9 @@
     const root = await GD.folder("Bonnenbak"); const fotos = await GD.folder("fotos", root);
     const all = await window.BB.all();
     const have = await GD.names(fotos);
-    const todo = all.filter((b) => b.foto instanceof Blob && !have.has(window.BB.fotoName(b)));
+    const todo = (await allPhotos()).filter((f) => !have.has(f.name));
     let i = 0;
-    for (const b of todo) { msg(`Foto's uploaden naar Google Drive… ${++i} van ${todo.length}`); await GD.put(window.BB.fotoName(b), fotos, b.foto); }
+    for (const f of todo) { msg(`Foto's uploaden naar Google Drive… ${++i} van ${todo.length}`); await GD.put(f.name, fotos, f.blob); }
     msg("Overzicht opslaan in Google Drive…");
     const top = await GD.names(root);
     await GD.put("bonnen.csv", root, new Blob([window.BB.csvText(all)], { type: "text/csv" }), top.get("bonnen.csv"));
