@@ -11,16 +11,17 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=2.0">
+<link rel="stylesheet" href="style.css?v=2.2">
 </head>
 <body>
 <header>
   <div class="wrap">
-    <div class="brand"><h1><button class="titlebtn" id="appTitle" type="button" aria-label="Info over BB">BB <span id="appVer">v2.1</span> <small class="copy">©26 Vipware</small></button></h1><button class="userbtn" id="userBtn" type="button" aria-label="Andere gebruiker kiezen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><span id="userName">Kies wie</span></button></div>
+    <div class="brand"><h1><button class="titlebtn" id="appTitle" type="button" aria-label="Info over BB">BB <span id="appVer">v2.2</span> <small class="copy">©26 Vipware</small></button></h1><button class="userbtn" id="userBtn" type="button" aria-label="Andere gebruiker kiezen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><span id="userName">Kies wie</span></button></div>
     <nav role="tablist">
       <button role="tab" aria-selected="true" data-view="bonnen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 21z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span class="lbl">Bonnen</span><span class="badge" hidden></span></button>
       <button role="tab" aria-selected="false" data-view="statiegeld"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v3.5c0 .6-.3 1.1-.7 1.5C8 9 7 10.5 7 12.5V19a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-6.5c0-2-1-3.5-2.3-4.5-.4-.4-.7-.9-.7-1.5V3"/><path d="M7 14h10"/></svg><span class="lbl">Statiegeld</span><span class="badge" hidden></span></button>
       <button role="tab" aria-selected="false" data-view="cadeau"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7M12 8v13"/><path d="M12 8c-1.5-3-5-4-5.5-2S9 8 12 8zM12 8c1.5-3 5-4 5.5-2S15 8 12 8z"/></svg><span class="lbl">Cadeau</span><span class="badge" hidden></span></button>
+      <button role="tab" aria-selected="false" data-view="reserveringen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8.5 15.5l2.3 2.3 4.7-4.6"/></svg><span class="lbl">Reserveringen</span><span class="badge" hidden></span></button>
       <button role="tab" aria-selected="false" data-view="lijsten"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg><span class="lbl">Lijsten</span></button>
     </nav>
   </div>
@@ -33,13 +34,13 @@
     <div class="group">
       <h2>BB <span id="infoVer"></span></h2>
       <div class="help" lang="nl" data-no-i18n>
-        <p class="info-text">BB is je digitale bonnenbak. Maak een foto van elke kassabon en leg meteen vast wie hem heeft betaald, voor welk project, met welke pas of rekening en waarom. Ook statiegeldbonnen en cadeaubonnen bewaar je in BB, zodat je nooit meer tegoed laat liggen.</p>
+        <p class="info-text">BB is je digitale bonnenbak. Maak een foto van elke kassabon en leg meteen vast wie hem heeft betaald, voor welk project, met welke pas of rekening en waarom. Ook statiegeldbonnen, cadeaubonnen en reserveringen bewaar je in BB, zodat je nooit meer tegoed laat liggen of een afspraak vergeet.</p>
         <h3>Gebruikers en Iedereen</h3>
-        <p>Rechtsboven staat wie je bent. BB onthoudt die keuze. Je ziet alleen je eigen bonnen, statiegeldbonnen en cadeaubonnen, en de tellers in het menu tellen alleen die van jou. Kies rechtsboven <b>Iedereen</b> om alles van alle gebruikers te zien. Nieuwe bonnen komen dan op naam van de laatst gekozen gebruiker. Onder Lijsten geef je elke gebruiker een eigen pasfoto, projecten en passen.</p>
+        <p>Rechtsboven staat wie je bent. BB onthoudt die keuze. Je ziet alleen je eigen bonnen, statiegeldbonnen, cadeaubonnen en reserveringen, en de tellers in het menu tellen alleen die van jou. Kies rechtsboven <b>Iedereen</b> om alles van alle gebruikers te zien. Nieuwe bonnen komen dan op naam van de laatst gekozen gebruiker. Onder Lijsten geef je elke gebruiker een eigen pasfoto, projecten en passen.</p>
         <h3>Bonnen</h3>
         <ul>
           <li>Tik op <b>Nieuwe bon</b>, maak een foto met de camera of kies er een uit je galerij.</li>
-          <li>Met <b>Bon automatisch lezen</b> vult BB winkel, datum en bedrag zelf in. Controleer ze even.</li>
+          <li>BB leest meteen de hele bon. Winkel, datum en bedrag worden ingevuld en alle tekst van de bon komt in het memoveld. Controleer het even. Met <b>Bon automatisch lezen</b> doe je dit opnieuw.</li>
           <li>Kies project, pas of rekening en schrijf de reden erbij. Tik op <b>Bon bewaren</b>.</li>
           <li>Filter op project of pas en zie meteen het totaal. Tik op een bon om hem te bekijken, te delen via WhatsApp of e-mail, of te verwijderen.</li>
           <li><b>Overzicht delen (CSV)</b> zet de bonnen die je ziet in een bestand voor Excel.</li>
@@ -58,23 +59,32 @@
           <li>Scan de streepjescode, kies een foto of typ het nummer over. Vink <b>Opgemaakt</b> aan als het tegoed op is.</li>
           <li>Standaard is een cadeaubon 2 jaar geldig.</li>
         </ul>
+        <h3>Reserveringen</h3>
+        <ul>
+          <li>Leg reserveringen vast voor een restaurant, hotel, theater of evenement: waar, datum en tijd, aantal personen, reserveringsnummer, op naam van, telefoon of contact, aanbetaald bedrag en bijzonderheden.</li>
+          <li>Tik op <b>Typen</b>, of scan of fotografeer de bevestiging of het ticket. BB leest de tekst en vult in wat het herkent.</li>
+          <li>Met <b>In agenda zetten</b> komt de reservering in je agenda, met een herinnering een dag en twee uur vooraf.</li>
+          <li>Deel een reservering via WhatsApp of e-mail met wie meegaat. Vink <b>Afgerond</b> aan als hij geweest is.</li>
+        </ul>
         <h3>Waarschuwingen</h3>
-        <p>Verloopt een statiegeldbon binnen 14 dagen of een cadeaubon binnen 30 dagen, dan wordt de teller in het menu rood en staat er een waarschuwing bovenaan bij Bonnen. Met <b>Meldingen aanzetten</b> krijg je hooguit één melding per dag. Met <b>Herinnering in agenda</b> zet je de vervaldatum met herinneringen in je agenda.</p>
+        <p>Verloopt een statiegeldbon binnen 14 dagen of een cadeaubon binnen 30 dagen, of is er binnen 3 dagen een reservering, dan wordt de teller in het menu rood en staat er een waarschuwing bovenaan bij Bonnen. Met <b>Meldingen aanzetten</b> krijg je hooguit één melding per dag. Met <b>Herinnering in agenda</b> zet je de vervaldatum met herinneringen in je agenda.</p>
         <h3>Export en import</h3>
-        <p>Onder Bonnen staat <b>Export en import</b>. Zet al je bonnen, statiegeld en cadeaubonnen met foto's in Dropbox, Google Drive of een back-upbestand, en haal ze op een ander toestel weer op. Bonnen die er al zijn worden niet dubbel toegevoegd.</p>
+        <p>Onder Bonnen staat <b>Export en import</b>. Zet al je bonnen, statiegeld, cadeaubonnen en reserveringen met foto's in Dropbox, Google Drive of een back-upbestand, en haal ze op een ander toestel weer op. Bonnen die er al zijn worden niet dubbel toegevoegd.</p>
+        <h3>Verwijderen</h3>
+        <p>Voordat BB iets verwijdert, vraagt het altijd eerst: <b>Weet u het zeker?</b> Verwijderd is echt weg, dus maak af en toe een export.</p>
         <h3>Op je telefoon zetten</h3>
         <p>Open BB in Chrome of Safari en kies <b>Toevoegen aan startscherm</b>. Dan opent BB als een gewone app, ook zonder internet.</p>
         <h3>Privacy</h3>
         <p>Alles wordt alleen op dit toestel bewaard. Er gaat niets naar een server, behalve wat je zelf deelt of exporteert. Maak dus af en toe een export als back-up.</p>
       </div>
       <div class="help" lang="en" data-no-i18n hidden>
-        <p class="info-text">BB is your digital receipt box. Snap a photo of every receipt and record right away who paid, for which project, with which card or account, and why. You can also keep deposit slips and gift cards in BB, so you never leave credit unused.</p>
+        <p class="info-text">BB is your digital receipt box. Snap a photo of every receipt and record right away who paid, for which project, with which card or account, and why. You can also keep deposit slips, gift cards and reservations in BB, so you never leave credit unused or forget a booking.</p>
         <h3>Users and Everyone</h3>
-        <p>The top right shows who you are, and BB remembers that choice. You only see your own receipts, deposit slips and gift cards, and the counters in the menu only count yours. Choose <b>Everyone</b> at the top right to see everything from all users. New receipts are then saved under the last chosen user. Under Lists, each user gets their own photo, projects and cards.</p>
+        <p>The top right shows who you are, and BB remembers that choice. You only see your own receipts, deposit slips, gift cards and reservations, and the counters in the menu only count yours. Choose <b>Everyone</b> at the top right to see everything from all users. New receipts are then saved under the last chosen user. Under Lists, each user gets their own photo, projects and cards.</p>
         <h3>Receipts</h3>
         <ul>
           <li>Tap <b>New receipt</b> and take a photo with the camera or pick one from your gallery.</li>
-          <li><b>Read receipt automatically</b> fills in store, date and amount for you. Give them a quick check.</li>
+          <li>BB reads the whole receipt right away. Store, date and amount are filled in and all text from the receipt goes into the memo field. Give it a quick check. <b>Read receipt automatically</b> does it again.</li>
           <li>Pick a project and a card or account, and add the reason. Tap <b>Save receipt</b>.</li>
           <li>Filter by project or card and see the total right away. Tap a receipt to view it, share it via WhatsApp or email, or delete it.</li>
           <li><b>Share overview (CSV)</b> puts the receipts you see in a file for Excel.</li>
@@ -93,10 +103,19 @@
           <li>Scan the barcode, pick a photo or type the number. Check <b>Used up</b> when the balance is gone.</li>
           <li>A gift card is valid for 2 years by default.</li>
         </ul>
+        <h3>Reservations</h3>
+        <ul>
+          <li>Keep reservations for a restaurant, hotel, theater or event: where, date and time, number of people, reservation no., name on booking, phone or contact, deposit paid and notes.</li>
+          <li>Tap <b>Type</b>, or scan or photograph the confirmation or ticket. BB reads the text and fills in what it recognizes.</li>
+          <li><b>Add to calendar</b> puts the reservation in your calendar, with a reminder one day and two hours before.</li>
+          <li>Share a reservation via WhatsApp or email with whoever is coming along. Check <b>Done</b> once it has taken place.</li>
+        </ul>
         <h3>Warnings</h3>
-        <p>When a deposit slip expires within 14 days or a gift card within 30 days, its menu counter turns red and a warning appears at the top of Receipts. <b>Turn on notifications</b> gives you at most one notification a day. <b>Add calendar reminder</b> puts the expiry date with reminders in your calendar.</p>
+        <p>When a deposit slip expires within 14 days or a gift card within 30 days, or a reservation is coming up within 3 days, its menu counter turns red and a warning appears at the top of Receipts. <b>Turn on notifications</b> gives you at most one notification a day. <b>Add calendar reminder</b> puts the expiry date with reminders in your calendar.</p>
         <h3>Export and import</h3>
-        <p>Under Receipts you'll find <b>Export and import</b>. Save all your receipts, deposit slips and gift cards with photos to Dropbox, Google Drive or a backup file, and load them again on another device. Items that are already there are not added twice.</p>
+        <p>Under Receipts you'll find <b>Export and import</b>. Save all your receipts, deposit slips, gift cards and reservations with photos to Dropbox, Google Drive or a backup file, and load them again on another device. Items that are already there are not added twice.</p>
+        <h3>Deleting</h3>
+        <p>Before BB deletes anything, it always asks first: <b>Are you sure?</b> Deleted means gone for good, so export now and then.</p>
         <h3>Put it on your phone</h3>
         <p>Open BB in Chrome or Safari and choose <b>Add to Home Screen</b>. BB then opens like a regular app, even offline.</p>
         <h3>Privacy</h3>
@@ -112,7 +131,8 @@
       </div>
     </div>
     <div class="group">
-      <h3>Stuur een bedankje</h3>
+      <div class="thanks-logo" aria-hidden="true"><svg viewBox="0 0 64 64" width="64" height="64"><rect x="8" y="24" width="48" height="12" rx="3" fill="var(--accent)"/><rect x="12" y="36" width="40" height="22" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/><rect x="29" y="24" width="6" height="34" fill="#d9534f"/><path d="M32 24c-4-9-14-12-15-6s8 6 15 6zM32 24c4-9 14-12 15-6s-8 6-15 6z" fill="#d9534f"/><path d="M48 6l1.6 3.4L53 11l-3.4 1.6L48 16l-1.6-3.4L43 11l3.4-1.6zM14 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="#f2b632"/></svg></div>
+      <h3 class="thanks-h">Stuur een bedankje</h3>
       <p class="hint">Blij met BB, of mis je iets? Laat het weten.</p>
       <label>Je bericht<textarea id="fbText" rows="7"></textarea></label>
       <div class="btns">
@@ -162,6 +182,7 @@
         <label>Pas of rekening<select id="f-pas"></select></label>
       </div>
       <label>Reden<textarea id="f-reden" placeholder="Waarvoor is dit gekocht?"></textarea></label>
+      <label>Memo<textarea id="f-memo" rows="5" placeholder="Alle tekst die van de bon gelezen wordt, komt hier. Je kunt hem aanpassen."></textarea></label>
       <div id="formMsg" class="msg" hidden></div>
       <div class="btns"><button class="btn primary big-btn" id="saveBtn" type="submit"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l3 3v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M8 3v5h7V3"/><path d="M9 15l2 2 4-4"/></svg><span>Bon bewaren</span></button></div>
     </form>
@@ -210,17 +231,15 @@
     <div class="copybox" id="d-text"></div>
     <div id="detailMsg" class="msg" hidden></div>
     <div class="btns"><button class="btn danger" id="delBtn" type="button">Bon verwijderen</button></div>
-    <div class="confirm" id="delConfirm" hidden>
-      <span>Deze bon en de foto definitief verwijderen?</span>
-      <div class="btns"><button class="btn danger" id="delYes" type="button">Ja, verwijderen</button><button class="btn" id="delNo" type="button">Annuleren</button></div>
-    </div>
   </section>
 
   <!-- STATIEGELD en CADEAU: inhoud wordt door vouchers.js gemaakt -->
   <section id="view-statiegeld" hidden></section>
   <section id="view-sgdetail" hidden></section>
   <section id="view-cadeau" hidden></section>
+  <section id="view-reserveringen" hidden></section>
   <section id="view-cadetail" hidden></section>
+  <section id="view-redetail" hidden></section>
 
   <!-- LIJSTEN -->
   <section id="view-lijsten" hidden>
@@ -237,11 +256,19 @@
     <div class="group fold" data-fold="passen" data-list="passen"><h3>Passen en rekeningen van <span class="who"></span></h3><div class="chips"></div><div class="addrow"><input placeholder="bijv. Zakelijke pin ING" aria-label="Pas toevoegen"><button class="btn" type="button">Toevoegen</button></div></div>
   </section>
 </main>
-<script src="i18n.js?v=2.0"></script>
-<script src="config.js?v=2.0"></script>
-<script src="app.js?v=2.0"></script>
-<script src="sync.js?v=2.0"></script>
-<script src="scan.js?v=2.0"></script>
-<script src="vouchers.js?v=2.0"></script>
+<dialog id="askDlg" class="ask">
+  <form method="dialog">
+    <div class="ask-ic" aria-hidden="true"><svg class="ic" width="28" height="28" viewBox="0 0 24 24"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17h.01"/></svg></div>
+    <h3>Weet u het zeker?</h3>
+    <p id="askText"></p>
+    <div class="btns"><button class="btn" value="no" id="askNo">Annuleren</button><button class="btn danger" value="yes" id="askYes">Ja, verwijderen</button></div>
+  </form>
+</dialog>
+<script src="i18n.js?v=2.2"></script>
+<script src="config.js?v=2.2"></script>
+<script src="app.js?v=2.2"></script>
+<script src="sync.js?v=2.2"></script>
+<script src="scan.js?v=2.2"></script>
+<script src="vouchers.js?v=2.2"></script>
 </body>
 </html>

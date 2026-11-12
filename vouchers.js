@@ -1,5 +1,5 @@
-/* BB — statiegeldbonnen en cadeaubonnen.
- * Eén module, twee soorten. Scannen (met verbeteraar uit scan.js), tekst lezen van de foto,
+/* BB — statiegeldbonnen, cadeaubonnen en reserveringen.
+ * Eén module, drie soorten. Scannen (met verbeteraar uit scan.js), tekst lezen van de foto,
  * bewerken, delen, afvinken, geldigheid bewaken met waarschuwingen en agenda-herinneringen. */
 (() => {
   "use strict";
@@ -45,7 +45,22 @@
       bonNr: false, pin: true, van: true, instructie: true,
       empty: "Nog geen cadeaubonnen. Tik op <b>Scannen</b> of <b>Typen</b> om je eerste cadeaubon toe te voegen.",
     },
+    reserveringen: {
+      key: "reserveringen", view: "reserveringen", detail: "redetail", p: "re", fotoPrefix: "res",
+      one: "reservering", many: "reserveringen", Title: "Reservering", months: 0, warnDays: 3,
+      totalLabel: "Aanbetaald", usedLabel: "Afgerond", usedFilter: "Afgerond", expiredLabel: "Voorbij", amountLabel: "Aanbetaald (€)",
+      shopLabel: "Waar", shopPh: "bijv. restaurant, hotel, theater", dateLabel: "Datum",
+      bonNr: true, bonNrLabel: "Reserveringsnr.", pin: false, van: true, vanLabel: "Op naam van",
+      instructie: true, instrLabel: "Bijzonderheden", instrPh: "Bijv. adres, dieetwensen, annuleren kan tot 24 uur vooraf",
+      res: true, calLabel: "In agenda zetten",
+      empty: "Nog geen reserveringen. Tik op <b>Typen</b>, of scan de bevestiging of het ticket.",
+    },
   };
+  const lb = (K, k, d) => t(K[k] || d);
+  // Tekst voor de waarschuwing: wat verloopt (of eraan komt) binnen een paar dagen.
+  const soonText = (K, n) => K.res
+    ? (n === 1 ? t("1 reservering binnen {d} dagen.", { d: K.warnDays }) : t("{n} reserveringen binnen {d} dagen.", { n, d: K.warnDays }))
+    : (n === 1 ? t("1 {x} verloopt binnen {d} dagen.", { x: t(K.one), d: K.warnDays }) : t("{n} {x} verlopen binnen {d} dagen.", { n, x: t(K.many), d: K.warnDays }));
 
   // ---------- tekst van de foto ontleden ----------
   const AMT = /(\d{1,4}[.,]\d{2})(?!\d)/g;
@@ -66,6 +81,11 @@
     if (gd) out.geldigTot = toIso(gd[1], gd[2], gd[3]);
     for (const m of text.matchAll(/\b(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4}|\d{2})\b/g)) { const iso = toIso(m[1], m[2], m[3]); if (iso && iso !== out.geldigTot) { out.datum = iso; break; } }
     const pin = text.match(/\bpin(?:code)?\s*[:.]?\s*(\d{4,8})\b/i); if (pin) out.pin = pin[1];
+    const tm = text.match(/\b([01]?\d|2[0-3])[:.]([0-5]\d)\s*(?:uur|u\b|h\b)?/i); if (tm) out.tijd = `${tm[1].padStart(2, "0")}:${tm[2]}`;
+    const pp = text.match(/\b(\d{1,3})\s*(?:personen|pers\.?|persons|people|guests|gasten)\b/i); if (pp) out.personen = pp[1];
+    const rn = text.match(/\b(?:reserverings?\s*(?:nr|nummer|code)|boekings?\s*(?:nr|nummer|code)|booking\s*(?:no|number|ref(?:erence)?|code)|confirmation\s*(?:no|number|code)|bevestigingsnummer)\s*[:#.]?\s*([A-Z0-9][A-Z0-9\-]{2,})/i);
+    if (rn) out.resNr = rn[1];
+    const ph = text.match(/(?:\+31|0)[\s-]?\d{1,3}[\s-]?\d{3}[\s-]?\d{3,4}/); if (ph) out.contact = ph[0];
     return out;
   }
 
@@ -101,16 +121,20 @@
         <label>${t("Nummer van de streepjescode")}<input id="${id("-nummer")}" class="amount" autocomplete="off"></label>
         <div class="row">
           <label>${t(K.amountLabel)}<input id="${id("-bedrag")}" class="amount" inputmode="decimal" placeholder="${I.lang === "en" ? "0.00" : "0,00"}"></label>
-          ${K.bonNr ? `<label>${t("BonNr.")}<input id="${id("-bonnr")}" class="amount" autocomplete="off"></label>` : ""}
+          ${K.bonNr ? `<label>${lb(K, "bonNrLabel", "BonNr.")}<input id="${id("-bonnr")}" class="amount" autocomplete="off"></label>` : ""}
           ${K.pin ? `<label>${t("Pincode")}<input id="${id("-pin")}" class="amount" inputmode="numeric" autocomplete="off"></label>` : ""}
         </div>
         <label>${t(K.shopLabel)}<input id="${id("-winkel")}" list="dl-winkels" placeholder="${t(K.shopPh)}" autocomplete="off"></label>
-        ${K.van ? `<label>${t("Gekregen van")}<input id="${id("-van")}" autocomplete="off"></label>` : ""}
+        ${K.van ? `<label>${lb(K, "vanLabel", "Gekregen van")}<input id="${id("-van")}" autocomplete="off"></label>` : ""}
         <div class="row">
           <label>${t(K.dateLabel)}<input id="${id("-datum")}" type="date"></label>
-          <label>${t("Geldig tot")}<input id="${id("-geldig")}" type="date"></label>
+          ${K.res ? `<label>${t("Tijd")}<input id="${id("-tijd")}" type="time"></label>` : `<label>${t("Geldig tot")}<input id="${id("-geldig")}" type="date"></label>`}
         </div>
-        ${K.instructie ? `<label>${t("Instructie")}<textarea id="${id("-instructie")}" rows="3" placeholder="${t("Bijv. alleen in de winkel, online inwisselen via de website, saldo checken op ...")}"></textarea></label>` : ""}
+        ${K.res ? `<div class="row">
+          <label>${t("Aantal personen")}<input id="${id("-personen")}" type="number" min="1" inputmode="numeric"></label>
+          <label>${t("Telefoon of contact")}<input id="${id("-contact")}" autocomplete="off"></label>
+        </div>` : ""}
+        ${K.instructie ? `<label>${lb(K, "instrLabel", "Instructie")}<textarea id="${id("-instructie")}" rows="3" placeholder="${lb(K, "instrPh", "Bijv. alleen in de winkel, online inwisselen via de website, saldo checken op ...")}"></textarea></label>` : ""}
         <label>${t("Memo")}<textarea id="${id("-memo")}" rows="4" placeholder="${t("Extra info. Tekst die van de foto gelezen wordt, komt hier.")}"></textarea></label>
         <div id="${id("FormMsg")}" class="msg" hidden></div>
         <div class="btns"><button class="btn primary big-btn" type="submit">${ICONS.save}<span id="${id("SaveLbl")}"></span></button><button class="btn" id="${id("FormCancel")}" type="button">${t("Annuleren")}</button></div>
@@ -118,7 +142,7 @@
       <div class="seg" role="group" aria-label="Filter">
         <button type="button" data-f="open" aria-pressed="true">${t("Open")}</button>
         <button type="button" data-f="gebruikt" aria-pressed="false">${t(K.usedFilter)}</button>
-        <button type="button" data-f="verlopen" aria-pressed="false">${t("Verlopen")}</button>
+        <button type="button" data-f="verlopen" aria-pressed="false">${lb(K, "expiredLabel", "Verlopen")}</button>
         <button type="button" data-f="alle" aria-pressed="false">${t("Alle")}</button>
       </div>
       <ul class="list" id="${id("List")}"></ul>
@@ -142,22 +166,19 @@
       </div>
       <div class="btns">
         <button class="btn" id="${id("dEdit")}" type="button">${ICONS.edit}${t("Bewerken")}</button>
-        <button class="btn" id="${id("dCal")}" type="button">${ICONS.cal}${t("Herinnering in agenda")}</button>
+        <button class="btn" id="${id("dCal")}" type="button">${ICONS.cal}${lb(K, "calLabel", "Herinnering in agenda")}</button>
       </div>
       <img id="${id("dImg")}" class="detail-img" alt="" hidden>
       <div id="${id("dMsg")}" class="msg" hidden></div>
-      <div class="btns"><button class="btn danger" id="${id("dDel")}" type="button">${t("Verwijderen")}</button></div>
-      <div class="confirm" id="${id("dConfirm")}" hidden>
-        <span>${t("Definitief verwijderen?")}</span>
-        <div class="btns"><button class="btn danger" id="${id("dYes")}" type="button">${t("Ja, verwijderen")}</button><button class="btn" id="${id("dNo")}" type="button">${t("Annuleren")}</button></div>
-      </div>`;
+      <div class="btns"><button class="btn danger" id="${id("dDel")}" type="button">${t("Verwijderen")}</button></div>`;
 
     // --- status ---
     function status(s) {
       if (s.gebruikt) return { key: "gebruikt", label: t(K.usedLabel), cls: "used" };
-      if (s.geldigTot && daysUntil(s.geldigTot) < 0) return { key: "verlopen", label: t("Verlopen"), cls: "expired" };
+      if (s.geldigTot && daysUntil(s.geldigTot) < 0) return { key: "verlopen", label: lb(K, "expiredLabel", "Verlopen"), cls: "expired" };
       if (s.geldigTot && daysUntil(s.geldigTot) <= K.warnDays) {
         const d = daysUntil(s.geldigTot);
+        if (K.res) return { key: "open", soon: true, label: d === 0 ? t("Vandaag") : d === 1 ? t("Morgen") : t("Over {n} dagen", { n: d }), cls: "soon" };
         return { key: "open", soon: true, label: d === 0 ? t("Laatste dag") : d === 1 ? t("Nog 1 dag") : t("Nog {n} dagen", { n: d }), cls: "soon" };
       }
       return { key: "open", label: t("Open"), cls: "" };
@@ -172,8 +193,10 @@
     function fillForm(s) {
       f("nummer").value = s.nummer || ""; f("bedrag").value = amountIn(s.bedrag);
       if (K.bonNr) f("bonnr").value = s.bonNr || ""; if (K.pin) f("pin").value = s.pin || "";
-      if (K.van) f("van").value = s.van || ""; if (K.instructie) f("instructie").value = s.instructie || "";
-      f("winkel").value = s.winkel || ""; f("datum").value = s.datum || BB.today(); f("geldig").value = s.geldigTot || "";
+      if (K.van) f("van").value = s.van || (K.res && !s.id ? BB.user() || "" : ""); if (K.instructie) f("instructie").value = s.instructie || "";
+      f("winkel").value = s.winkel || ""; f("datum").value = s.datum || BB.today();
+      if (K.res) { f("tijd").value = s.tijd || ""; f("personen").value = s.personen || ""; f("contact").value = s.contact || ""; }
+      else f("geldig").value = s.geldigTot || "";
       f("memo").value = s.memo || "";
     }
     function setPreview(blob, src) {
@@ -190,7 +213,7 @@
       el("SaveLbl").textContent = item ? t("Wijzigingen bewaren") : t("{x} bewaren", { x: t(K.Title) });
       if (item) fillForm(item);
       else {
-        fillForm({ nummer: nummer || "", datum: BB.today(), geldigTot: addMonths(BB.today(), K.months), winkel: recallWinkel() });
+        fillForm({ nummer: nummer || "", datum: BB.today(), geldigTot: addMonths(BB.today(), K.months), winkel: K.res ? "" : recallWinkel() });
         st.formaat = formaat || (nummer ? S.guessFormat(nummer) : "");
         // Veel statiegeldbonnen (EAN-13 die met 2 begint) hebben het bedrag in de code, in centen.
         if (K.key === "statiegeld" && /^2\d{12}$/.test(nummer || "") && S.eanOk(nummer)) { const ct = parseInt(nummer.slice(7, 12), 10); if (ct > 0 && ct < 50000) f("bedrag").value = amountIn(ct / 100); }
@@ -206,7 +229,7 @@
     }
     const recallWinkel = () => { try { return localStorage.getItem("bb-" + p + "-winkel") || ""; } catch (e) { return ""; } };
     f("nummer").addEventListener("input", () => { const nr = f("nummer").value.replace(/\s+/g, ""); st.formaat = S.guessFormat(nr); S.drawBarcode(el("BarcodeNew"), nr, st.formaat); });
-    f("datum").addEventListener("change", () => { if (f("datum").value && !st.editing) f("geldig").value = addMonths(f("datum").value, K.months); });
+    f("datum").addEventListener("change", () => { if (f("datum").value && !st.editing && !K.res) f("geldig").value = addMonths(f("datum").value, K.months); });
     el("Manual").addEventListener("click", () => { stopScan(); show(el("Msg"), ""); openForm({}); f("nummer").focus(); });
     el("FormCancel").addEventListener("click", () => { el("Form").hidden = true; st.photo = null; st.editing = null; });
     el("FormPhoto").addEventListener("change", async (e) => {
@@ -224,10 +247,11 @@
         const r = parseVoucher(text), filled = [];
         const setIf = (key, v, label) => { if (v == null || v === "" || !f(key)) return; if (!f(key).value || (key === "memo") || (key === "geldig" && auto) || (key === "datum" && auto)) { f(key).value = v; filled.push(label); } };
         if (r.bedrag != null && !f("bedrag").value) { f("bedrag").value = amountIn(r.bedrag); filled.push(t("bedrag")); }
-        if (K.bonNr) setIf("bonnr", r.bonNr, t("BonNr."));
+        if (K.bonNr) setIf("bonnr", K.res ? r.resNr || r.bonNr : r.bonNr, lb(K, "bonNrLabel", "BonNr."));
+        if (K.res) { setIf("tijd", r.tijd, t("tijd")); setIf("personen", r.personen, t("personen")); setIf("contact", r.contact, t("contact")); }
         if (K.pin) setIf("pin", r.pin, t("pincode"));
         setIf("winkel", r.winkel, t("winkel"));
-        if (r.datum) setIf("datum", r.datum, t("datum"));
+        if (r.datum) setIf("datum", K.res && r.geldigTot ? r.geldigTot : r.datum, t("datum"));
         if (r.geldigTot) setIf("geldig", r.geldigTot, t("geldig tot"));
         if (r.memo) { f("memo").value = (f("memo").value && !auto ? f("memo").value + "\n\n" : "") + r.memo; filled.push(t("memo")); }
         show(msg, filled.length ? t("Ingevuld: {x}. Controleer het even.", { x: filled.join(", ") }) : t("Er was geen tekst te lezen op de foto."));
@@ -240,18 +264,20 @@
       e.preventDefault();
       const nummer = f("nummer").value.replace(/\s+/g, "");
       const bedrag = BB.parseAmount(f("bedrag").value);
-      if (!nummer && !st.photo && !(st.editing && (st.editing.foto || st.editing.thumb))) { show(el("FormMsg"), t("Vul het nummer van de streepjescode in, of scan de bon."), true); return; }
+      if (K.res && !nummer && !st.photo && !f("winkel").value.trim() && !(st.editing && (st.editing.foto || st.editing.thumb))) { show(el("FormMsg"), t("Vul in waar de reservering is."), true); return; }
+      if (!K.res && !nummer && !st.photo && !(st.editing && (st.editing.foto || st.editing.thumb))) { show(el("FormMsg"), t("Vul het nummer van de streepjescode in, of scan de bon."), true); return; }
       if (nummer && st.items.some((s) => s.nummer === nummer && (!st.editing || s.id !== st.editing.id))) { show(el("FormMsg"), t("Deze bon staat er al in."), true); return; }
       const base = st.editing ? { ...st.editing } : { id: newId(), gebruikt: false, gebruiktOp: "", wie: BB.user(), aangemaakt: new Date().toISOString() };
       const item = {
         ...base, nummer, formaat: nummer ? (st.formaat || S.guessFormat(nummer)) : "", bedrag: bedrag == null ? null : bedrag,
-        winkel: f("winkel").value.trim(), datum: f("datum").value || BB.today(), geldigTot: f("geldig").value || "", memo: f("memo").value.trim(),
+        winkel: f("winkel").value.trim(), datum: f("datum").value || BB.today(), geldigTot: K.res ? f("datum").value || BB.today() : f("geldig").value || "", memo: f("memo").value.trim(),
         gewijzigd: new Date().toISOString(),
       };
       if (K.bonNr) item.bonNr = f("bonnr").value.trim();
       if (K.pin) item.pin = f("pin").value.trim();
       if (K.van) item.van = f("van").value.trim();
       if (K.instructie) item.instructie = f("instructie").value.trim();
+      if (K.res) { item.tijd = f("tijd").value; item.personen = f("personen").value; item.contact = f("contact").value.trim(); }
       if (st.photo) { item.foto = st.photo.blob; item.thumb = st.photo.thumb; }
       try {
         await store.put(item);
@@ -327,10 +353,10 @@
     function render() {
       const open = openItems();
       el("Open").textContent = I.eur(open.reduce((x, s) => x + (Number(s.bedrag) || 0), 0));
-      el("Count").textContent = open.length === 1 ? t("1 open bon") : t("{n} open bonnen", { n: open.length });
+      el("Count").textContent = K.res ? (open.length === 1 ? t("1 komende reservering") : t("{n} komende reserveringen", { n: open.length })) : open.length === 1 ? t("1 open bon") : t("{n} open bonnen", { n: open.length });
       const soon = soonItems();
       el("Warn").hidden = !soon.length;
-      el("Warn").innerHTML = soon.length ? `<button type="button">${ICONS.warn}<span>${esc(soon.length === 1 ? t("1 {x} verloopt binnen {d} dagen.", { x: t(K.one), d: K.warnDays }) : t("{n} {x} verlopen binnen {d} dagen.", { n: soon.length, x: t(K.many), d: K.warnDays }))}</span></button>` : "";
+      el("Warn").innerHTML = soon.length ? `<button type="button">${ICONS.warn}<span>${esc(soonText(K, soon.length))}</span></button>` : "";
       const b = el("Warn").querySelector("button"); if (b) b.onclick = () => setFilter("open");
       el("NotifRow").hidden = !("Notification" in window) || Notification.permission !== "default" || !st.items.length;
       const all = mine();
@@ -343,11 +369,13 @@
         const li = document.createElement("li"), c = document.createElement("button"); c.type = "button"; c.className = "card" + (s.gebruikt ? " is-used" : "");
         const th = document.createElement("div"); th.className = "sgbar"; th.setAttribute("aria-hidden", "true");
         if (s.nummer) S.miniBarcode(th, s.nummer, s.formaat); else if (s.thumb) { const im = document.createElement("img"); im.src = s.thumb; im.alt = ""; im.style.cssText = "width:100%;height:100%;object-fit:cover"; th.appendChild(im); }
+        else if (K.res) { th.classList.add("sgcal"); th.innerHTML = ICONS.cal; }
         const tx = document.createElement("div"); tx.className = "t";
         const n = document.createElement("b"); n.textContent = s.winkel || t(K.Title);
-        const s1 = document.createElement("span"); s1.className = "amount"; s1.textContent = s.nummer || s.bonNr || "–";
+        const s1 = document.createElement("span"); s1.className = "amount"; s1.textContent = s.nummer || s.bonNr || (K.res ? s.van || "–" : "–");
         const s2 = document.createElement("span"); const pill = document.createElement("span"); pill.className = "pill " + ss.cls; pill.textContent = ss.label; s2.appendChild(pill);
-        if (s.geldigTot && !s.gebruikt) s2.append(" " + t("t/m") + " " + I.date(s.geldigTot));
+        if (K.res) { s1.className = ""; s1.textContent = I.date(s.datum) + (s.tijd ? " " + s.tijd : "") + (s.personen ? " · " + t("{n} pers.", { n: s.personen }) : ""); if (s.bonNr) s2.append(" " + s.bonNr); }
+        else if (s.geldigTot && !s.gebruikt) s2.append(" " + t("t/m") + " " + I.date(s.geldigTot));
         if (BB.alle() && s.wie) s2.append(" · " + s.wie);
         tx.append(n, s1, s2);
         const a = document.createElement("div"); a.className = "a amount"; a.textContent = s.bedrag == null ? "–" : I.eur(s.bedrag);
@@ -360,12 +388,15 @@
     function shareText(s) {
       const L = [`${t(K.Title)}: ${s.winkel || "–"}`];
       if (s.nummer) L.push(`${t("Nummer")}: ${s.nummer}`);
-      if (s.bonNr) L.push(`${t("BonNr.")}: ${s.bonNr}`);
+      if (K.res) L.push(`${t("Datum")}: ${I.date(s.datum)}${s.tijd ? " " + s.tijd : ""}`);
+      if (s.personen) L.push(`${t("Aantal personen")}: ${s.personen}`);
+      if (s.bonNr) L.push(`${lb(K, "bonNrLabel", "BonNr.")}: ${s.bonNr}`);
       if (s.bedrag != null) L.push(`${t(K.amountLabel.replace(" (€)", ""))}: ${I.eur(s.bedrag)}`);
       if (s.pin) L.push(`${t("Pincode")}: ${s.pin}`);
-      if (s.geldigTot) L.push(`${t("Geldig tot")}: ${I.date(s.geldigTot)}`);
-      if (s.van) L.push(`${t("Gekregen van")}: ${s.van}`);
-      if (s.instructie) L.push(`${t("Instructie")}: ${s.instructie}`);
+      if (s.geldigTot && !K.res) L.push(`${t("Geldig tot")}: ${I.date(s.geldigTot)}`);
+      if (s.van) L.push(`${lb(K, "vanLabel", "Gekregen van")}: ${s.van}`);
+      if (s.contact) L.push(`${t("Contact")}: ${s.contact}`);
+      if (s.instructie) L.push(`${lb(K, "instrLabel", "Instructie")}: ${s.instructie}`);
       if (s.memo) L.push(`${t("Memo")}: ${s.memo}`);
       L.push(`${t("Status")}: ${status(s).label}`);
       return L.join("\n");
@@ -376,12 +407,15 @@
       el("dStatus").innerHTML = `<span class="pill ${ss.cls}">${esc(ss.label)}</span>`;
       if (s.nummer) S.drawBarcode(el("dBarcode"), s.nummer, s.formaat, true); else el("dBarcode").innerHTML = "";
       el("dBedrag").textContent = s.bedrag == null ? "" : I.eur(s.bedrag);
-      el("dInfo").textContent = [s.winkel, s.datum ? t(K.dateLabel).toLowerCase() + " " + I.date(s.datum) : "", s.geldigTot ? t("geldig tot") + " " + I.date(s.geldigTot) : "", s.wie ? t("door {x}", { x: s.wie }) : ""].filter(Boolean).join(" · ");
+      el("dInfo").textContent = (K.res
+        ? [s.winkel, I.date(s.datum) + (s.tijd ? " " + s.tijd : ""), s.personen ? t("{n} pers.", { n: s.personen }) : "", s.wie ? t("door {x}", { x: s.wie }) : ""]
+        : [s.winkel, s.datum ? t(K.dateLabel).toLowerCase() + " " + I.date(s.datum) : "", s.geldigTot ? t("geldig tot") + " " + I.date(s.geldigTot) : "", s.wie ? t("door {x}", { x: s.wie }) : ""]).filter(Boolean).join(" · ");
       const rows = [];
-      if (s.bonNr) rows.push([t("BonNr."), s.bonNr]);
+      if (s.bonNr) rows.push([lb(K, "bonNrLabel", "BonNr."), s.bonNr]);
+      if (s.contact) rows.push([t("Contact"), s.contact]);
       if (s.pin) rows.push([t("Pincode"), s.pin]);
-      if (s.van) rows.push([t("Gekregen van"), s.van]);
-      if (s.instructie) rows.push([t("Instructie"), s.instructie]);
+      if (s.van) rows.push([lb(K, "vanLabel", "Gekregen van"), s.van]);
+      if (s.instructie) rows.push([lb(K, "instrLabel", "Instructie"), s.instructie]);
       if (s.memo) rows.push([t("Memo"), s.memo]);
       el("dFields").hidden = !rows.length;
       el("dFields").innerHTML = rows.map(([k, v]) => `<div class="ln col"><span>${esc(k)}</span><span class="pre">${esc(v)}</span></div>`).join("");
@@ -392,7 +426,7 @@
       el("dCal").hidden = !s.geldigTot || s.gebruikt;
       const img = el("dImg"); if (img.dataset.url) { URL.revokeObjectURL(img.dataset.url); delete img.dataset.url; }
       if (s.foto instanceof Blob) { img.dataset.url = URL.createObjectURL(s.foto); img.src = img.dataset.url; img.hidden = false; } else if (s.thumb) { img.src = s.thumb; img.hidden = false; } else img.hidden = true;
-      el("dConfirm").hidden = true; show(el("dMsg"), "");
+      show(el("dMsg"), "");
       BB.go(K.detail);
       if (navigator.wakeLock) navigator.wakeLock.request("screen").catch(() => {});
     }
@@ -403,9 +437,9 @@
     el("dUsed").addEventListener("change", (e) => update({ gebruikt: e.target.checked, gebruiktOp: e.target.checked ? BB.today() : "" }));
     el("dEdit").addEventListener("click", () => openForm({ item: st.current }));
     el("Back").addEventListener("click", () => BB.go(K.view));
-    el("dDel").addEventListener("click", () => { el("dConfirm").hidden = false; });
-    el("dNo").addEventListener("click", () => { el("dConfirm").hidden = true; });
-    el("dYes").addEventListener("click", async () => { try { await store.del(st.current.id); await load(); BB.go(K.view); } catch (e) { show(el("dMsg"), t("Verwijderen is mislukt."), true); } });
+    el("dDel").addEventListener("click", async () => {
+      if (!(await BB.ask(t("Deze {x} wordt definitief verwijderd.", { x: t(K.one) })))) return;
+      try { await store.del(st.current.id); await load(); BB.go(K.view); } catch (e) { show(el("dMsg"), t("Verwijderen is mislukt."), true); } });
     async function shareFiles(files, text, title) {
       if (navigator.canShare && navigator.canShare({ files })) { try { await navigator.share({ files, text, title }); } catch (e) {} return true; }
       return false;
@@ -427,11 +461,16 @@
       const d = s.geldigTot.replace(/-/g, ""), next = addMonths(s.geldigTot, 0).replace(/-/g, "");
       const end = new Date(s.geldigTot + "T12:00:00"); end.setDate(end.getDate() + 1); const dEnd = end.toISOString().slice(0, 10).replace(/-/g, "");
       const icsEsc = (x) => String(x).replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/[,;]/g, (c) => "\\" + c);
-      const summary = t("{x} {w} verloopt", { x: t(K.Title), w: s.winkel || "" }).replace(/\s+/g, " ");
+      const summary = (K.res ? t("Reservering {w}", { w: s.winkel || "" }) : t("{x} {w} verloopt", { x: t(K.Title), w: s.winkel || "" })).replace(/\s+/g, " ").trim();
       const desc = shareText(s);
       const alarm = (days) => `BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-P${days}D\r\nDESCRIPTION:${icsEsc(summary)}\r\nEND:VALARM\r\n`;
+      const tm = K.res && /^\d{2}:\d{2}$/.test(s.tijd || "") ? s.tijd.replace(":", "") + "00" : "";
+      const endT = tm ? String((+tm.slice(0, 2) + 2) % 24).padStart(2, "0") + tm.slice(2) : "";
+      const when = tm ? `DTSTART:${d}T${tm}\r\nDTEND:${+tm.slice(0, 2) >= 22 ? dEnd : d}T${endT}\r\n` : `DTSTART;VALUE=DATE:${d}\r\nDTEND;VALUE=DATE:${dEnd}\r\n`;
+      const alarmT = (tr) => `BEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:${tr}\r\nDESCRIPTION:${icsEsc(summary)}\r\nEND:VALARM\r\n`;
+      const alarms = K.res ? alarmT("-P1D") + (tm ? alarmT("-PT2H") : "") : alarm(K.warnDays) + alarm(7) + alarm(1);
       const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
-      const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Vipware//BB//NL\r\nCALSCALE:GREGORIAN\r\nBEGIN:VEVENT\r\nUID:${s.id}@bb.vipware\r\nDTSTAMP:${stamp}\r\nDTSTART;VALUE=DATE:${d}\r\nDTEND;VALUE=DATE:${dEnd}\r\nSUMMARY:${icsEsc(summary)}\r\nDESCRIPTION:${icsEsc(desc)}\r\n${alarm(K.warnDays)}${alarm(7)}${alarm(1)}END:VEVENT\r\nEND:VCALENDAR\r\n`;
+      const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Vipware//BB//NL\r\nCALSCALE:GREGORIAN\r\nBEGIN:VEVENT\r\nUID:${s.id}@bb.vipware\r\nDTSTAMP:${stamp}\r\n${when}SUMMARY:${icsEsc(summary)}\r\nDESCRIPTION:${icsEsc(desc)}\r\n${alarms}END:VEVENT\r\nEND:VCALENDAR\r\n`;
       void next;
       const file = new File([ics], `${p}-${s.geldigTot}.ics`, { type: "text/calendar" });
       if (await shareFiles([file], summary, summary)) return;
@@ -475,7 +514,7 @@
         if (soon.length) parts.push({ m, n: soon.length });
       }
       bar.hidden = !parts.length;
-      bar.innerHTML = parts.map(({ m, n }) => `<button type="button" data-go="${m.K.view}">${ICONS.warn}<span>${esc(n === 1 ? t("1 {x} verloopt binnen {d} dagen.", { x: t(m.K.one), d: m.K.warnDays }) : t("{n} {x} verlopen binnen {d} dagen.", { n, x: t(m.K.many), d: m.K.warnDays }))}</span></button>`).join("");
+      bar.innerHTML = parts.map(({ m, n }) => `<button type="button" data-go="${m.K.view}">${ICONS.warn}<span>${esc(soonText(m.K, n))}</span></button>`).join("");
       bar.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => BB.go(b.dataset.go)));
     },
     // Eén melding per dag als er iets binnenkort verloopt (alleen als meldingen zijn toegestaan).
@@ -484,7 +523,7 @@
       const key = "bb-notified", today = BB.today();
       try { if (!force && localStorage.getItem(key) === today) return; } catch (e) {}
       const lines = [];
-      for (const m of Object.values(window.BBV)) { const n = m.soonItems().length; if (n) lines.push(n === 1 ? t("1 {x} verloopt binnen {d} dagen.", { x: t(m.K.one), d: m.K.warnDays }) : t("{n} {x} verlopen binnen {d} dagen.", { n, x: t(m.K.many), d: m.K.warnDays })); }
+      for (const m of Object.values(window.BBV)) { const n = m.soonItems().length; if (n) lines.push(soonText(m.K, n)); }
       if (!lines.length) return;
       try { localStorage.setItem(key, today); } catch (e) {}
       const opts = { body: lines.join("\n"), icon: "icons/icon-192.png", tag: "bb-verloopt" };
@@ -493,7 +532,7 @@
     },
   };
 
-  window.BBV = { statiegeld: makeModule(KINDS.statiegeld), cadeau: makeModule(KINDS.cadeau) };
+  window.BBV = { statiegeld: makeModule(KINDS.statiegeld), cadeau: makeModule(KINDS.cadeau), reserveringen: makeModule(KINDS.reserveringen) };
   window.BBSG = window.BBV.statiegeld; // oude naam, voor sync.js
   document.addEventListener("bb:user", () => { for (const m of Object.values(window.BBV)) m.render(); Warnings.update(); });
   Promise.all(Object.values(window.BBV).map((m) => m.load())).then(() => { Warnings.update(); Warnings.notify(false); });

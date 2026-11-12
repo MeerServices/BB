@@ -176,3 +176,20 @@ nav .badge.warn{background:var(--danger);color:#fff}
 .help ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .av-all{background:var(--accent);color:var(--accent-ink);display:inline-flex;align-items:center;justify-content:center}
 .who-all{font-weight:600}
+/* v2.2: vijf menuknoppen, bevestigen, bedankje */
+nav button{min-width:0}
+nav button .lbl{font-size:11.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+dialog.ask{border:0;border-radius:14px;padding:22px 20px 18px;max-width:340px;width:calc(100% - 32px);background:var(--paper);color:var(--ink);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+dialog.ask::backdrop{background:rgba(0,0,0,.45)}
+dialog.ask h3{margin:6px 0 6px;font-size:19px;text-align:center}
+dialog.ask p{margin:0 0 16px;text-align:center;color:var(--muted)}
+dialog.ask .ask-ic{display:flex;justify-content:center;color:var(--danger)}
+dialog.ask .btns{display:flex;gap:8px}
+dialog.ask .btns .btn{flex:1}
+.thanks-logo{display:flex;justify-content:center;margin:4px 0 2px}
+.thanks-h{text-align:center}
+nav button .lbl{font-size:10.5px;letter-spacing:-.15px}
+.card .sgbar.sgcal{display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.card .sgbar.sgcal .ic{width:28px;height:28px}
+nav button{flex:1 1 auto;padding-inline:1px}
+nav button .lbl{overflow:visible;text-overflow:clip}

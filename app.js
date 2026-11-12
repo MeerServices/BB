@@ -1,7 +1,7 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "2.1";
+  const VERSION = "2.2";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", alle: false, photo: null, current: null, urls: [] };
@@ -22,7 +22,7 @@
   const slug = (s) => (s || "onbekend").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
   // ---------- storage (IndexedDB) ----------
-  const DB_NAME = "bonnenbak", DB_VERSION = 3;
+  const DB_NAME = "bonnenbak", DB_VERSION = 4;
   let dbp = null;
   function openDb() {
     if (dbp) return dbp;
@@ -34,6 +34,7 @@
         if (!db.objectStoreNames.contains("instellingen")) db.createObjectStore("instellingen");
         if (!db.objectStoreNames.contains("statiegeld")) db.createObjectStore("statiegeld", { keyPath: "id" });
         if (!db.objectStoreNames.contains("cadeau")) db.createObjectStore("cadeau", { keyPath: "id" });
+        if (!db.objectStoreNames.contains("reserveringen")) db.createObjectStore("reserveringen", { keyPath: "id" });
       };
       r.onsuccess = () => res(r.result);
       r.onerror = () => rej(r.error);
@@ -62,8 +63,19 @@
   }
 
   // ---------- views ----------
-  const VIEWS = ["info", "kies", "nieuw", "bonnen", "statiegeld", "cadeau", "lijsten", "detail", "sgdetail", "cadetail"];
-  const PARENT = { detail: "bonnen", nieuw: "bonnen", sgdetail: "statiegeld", cadetail: "cadeau" };
+  const VIEWS = ["info", "kies", "nieuw", "bonnen", "statiegeld", "cadeau", "reserveringen", "lijsten", "detail", "sgdetail", "cadetail", "redetail"];
+  const PARENT = { detail: "bonnen", nieuw: "bonnen", sgdetail: "statiegeld", cadetail: "cadeau", redetail: "reserveringen" };
+  // "Weet u het zeker?" voordat er iets verwijderd wordt.
+  function ask(text, yes) {
+    const dlg = $("askDlg");
+    $("askText").textContent = text || ""; $("askYes").textContent = yes || t("Ja, verwijderen");
+    return new Promise((res) => {
+      if (!dlg.showModal) { res(window.confirm(t("Weet u het zeker?") + "\n\n" + (text || ""))); return; }
+      dlg.returnValue = "";
+      dlg.addEventListener("close", () => res(dlg.returnValue === "yes"), { once: true });
+      dlg.showModal(); $("askNo").focus();
+    });
+  }
   // Tellers op de menuknoppen. warn = er verloopt binnenkort iets.
   function setBadge(view, n, warn) {
     const b = document.querySelector(`nav button[data-view="${view}"] .badge`); if (!b) return;
@@ -103,6 +115,7 @@
       state.photo = { blob, thumb };
       $("photoPreview").src = img.src; $("photoPreview").hidden = false; $("photoEmpty").hidden = true;
       $("ocrRow").hidden = false; show($("ocrMsg"), "");
+      readReceipt(true); // meteen de hele bon lezen
     } catch (err) {
       show($("formMsg"), "Deze foto kon niet worden geopend. Probeer een JPG- of PNG-foto.", true);
     }
@@ -175,7 +188,8 @@
     if (bedrag == null) { const all = (text.match(amt) || []).map(parseAmount).filter((n) => n != null && n > 0 && n < 100000); if (all.length) bedrag = Math.max(...all); }
     return { winkel, datum, bedrag };
   }
-  $("ocrBtn").addEventListener("click", async () => {
+  $("ocrBtn").addEventListener("click", () => readReceipt(false));
+  async function readReceipt(auto) {
     if (!state.photo) return;
     const btn = $("ocrBtn"); btn.disabled = true; show($("ocrMsg"), "");
     btn.textContent = "Leesprogramma laden…";
@@ -185,6 +199,8 @@
       const { data } = await T.recognize(state.photo.blob, "nld+eng", { logger: (m) => { if (m.status === "recognizing text") btn.textContent = `Bon wordt gelezen… ${Math.round(m.progress * 100)}%`; } });
       const r = parseReceipt(data.text || "");
       const filled = [];
+      const memo = (data.text || "").split(/\n+/).map((l) => l.replace(/\s+/g, " ").trim()).filter((l) => /[\p{L}\p{N}]{2,}/u.test(l)).join("\n").slice(0, 4000);
+      if (memo) { $("f-memo").value = auto || !$("f-memo").value ? memo : $("f-memo").value + "\n\n" + memo; filled.push("memo"); }
       if (r.winkel) { $("f-winkel").value = r.winkel; filled.push("winkel"); }
       if (r.datum) { $("f-datum").value = r.datum; filled.push("datum"); }
       if (r.bedrag != null) { $("f-bedrag").value = r.bedrag.toFixed(2).replace(".", ","); filled.push("bedrag"); }
@@ -192,7 +208,7 @@
     } catch (err) {
       show($("ocrMsg"), "De bon kon niet worden gelezen. Controleer je internetverbinding of vul de gegevens zelf in.", true);
     } finally { btn.disabled = false; btn.textContent = "Bon automatisch lezen"; }
-  });
+  }
 
   async function ocr(blob, onProgress) {
     const T = await loadTesseract();
@@ -235,7 +251,7 @@
       const c = document.createElement("span"); c.className = "chip";
       const t = document.createElement("span"); t.textContent = v;
       const x = document.createElement("button"); x.type = "button"; x.setAttribute("aria-label", v + " verwijderen"); x.textContent = "×";
-      x.onclick = () => onRemove(v);
+      x.onclick = async () => { if (await ask(t("{x} wordt uit de lijst verwijderd.", { x: v }))) onRemove(v); };
       c.append(t, x); box.appendChild(c);
     });
   }
@@ -295,7 +311,7 @@
   }
   $("meCam").addEventListener("change", onPasfoto);
   $("meGal").addEventListener("change", onPasfoto);
-  $("meFotoDel").addEventListener("click", () => { const per = { ...state.lijsten.per, [state.user]: { ...mine() } }; delete per[state.user].foto; saveLijsten({ ...state.lijsten, per }); });
+  $("meFotoDel").addEventListener("click", async () => { if (!(await ask(t("Je pasfoto wordt verwijderd.")))) return; const per = { ...state.lijsten.per, [state.user]: { ...mine() } }; delete per[state.user].foto; saveLijsten({ ...state.lijsten, per }); });
   ["f-project", "f-pas"].forEach((id) => $(id).addEventListener("change", (e) => remember(id.slice(2) + "-" + state.user, e.target.value)));
   async function saveLijsten(next) {
     state.lijsten = normalize(next); renderLijsten();
@@ -346,7 +362,7 @@
   // ---------- bewaren ----------
   function resetPhoto() {
     state.photo = null; $("photoCam").value = ""; $("photoGal").value = "";
-    $("photoPreview").hidden = true; $("photoEmpty").hidden = false; $("ocrRow").hidden = true; show($("ocrMsg"), "");
+    $("photoPreview").hidden = true; $("photoEmpty").hidden = false; $("ocrRow").hidden = true; show($("ocrMsg"), ""); $("f-memo").value = "";
   }
   $("form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -355,7 +371,7 @@
     const bon = {
       id: (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)),
       winkel: $("f-winkel").value.trim(), datum: $("f-datum").value || today(), bedrag,
-      wie: state.user, project: $("f-project").value, pas: $("f-pas").value, reden: $("f-reden").value.trim(),
+      wie: state.user, project: $("f-project").value, pas: $("f-pas").value, reden: $("f-reden").value.trim(), memo: $("f-memo").value.trim(),
       aangemaakt: new Date().toISOString(),
     };
     const missing = [];
@@ -406,7 +422,7 @@
   const shareText = (b) => [
     `${t("Bon")}: ${b.winkel || t("onbekende winkel")}`, `${t("Datum")}: ${nlDate(b.datum)}`, `${t("Bedrag")}: ${eur(b.bedrag)}`,
     `${t("Gekocht door")}: ${b.wie || "–"}`, `${t("Project")}: ${b.project || "–"}`, `${t("Betaald met")}: ${b.pas || "–"}`, `${t("Reden")}: ${b.reden || "–"}`,
-  ].join("\n");
+  ].concat(b.memo ? [`${t("Memo")}:`, b.memo] : []).join("\n");
   const fileName = (b) => `bon-${slug(b.winkel)}-${b.datum || "datum"}.jpg`;
   function openDetail(id) {
     const b = state.bonnen.find((x) => x.id === id); if (!b) return; state.current = b;
@@ -419,13 +435,14 @@
     line("Datum", nlDate(b.datum)); slip.appendChild(document.createElement("hr"));
     line("Gekocht door", b.wie || "–"); line("Project", b.project || "–"); line("Betaald met", b.pas || "–"); line("Reden", b.reden || "–");
     slip.appendChild(document.createElement("hr")); line("TOTAAL", eur(b.bedrag), "tot");
+    if (b.memo) { slip.appendChild(document.createElement("hr")); line("Memo", b.memo, "col"); slip.lastChild.lastChild.className = "pre"; }
     const text = shareText(b); $("d-text").textContent = text;
     $("waBtn").href = "https://wa.me/?text=" + encodeURIComponent(text);
     $("mailBtn").href = "mailto:?subject=" + encodeURIComponent(`${t("Bon")} ${b.winkel || ""} ${nlDate(b.datum)} - ${b.project || ""}`) + "&body=" + encodeURIComponent(text);
     const canFiles = !!(navigator.canShare && b.foto instanceof Blob && navigator.canShare({ files: [new File([b.foto], fileName(b), { type: "image/jpeg" })] }));
     $("shareBtn").textContent = canFiles ? "Delen met foto" : "Foto opslaan";
     $("shareHint").hidden = !canFiles;
-    $("delConfirm").hidden = true; show($("detailMsg"), "");
+    show($("detailMsg"), "");
     go("detail");
   }
   $("shareBtn").addEventListener("click", async () => {
@@ -444,18 +461,17 @@
       show($("detailMsg"), "Foto opgeslagen. Voeg hem toe aan je WhatsApp- of e-mailbericht.");
     }
   });
-  $("delBtn").addEventListener("click", () => { $("delConfirm").hidden = false; });
-  $("delNo").addEventListener("click", () => { $("delConfirm").hidden = true; });
-  $("delYes").addEventListener("click", async () => {
+  $("delBtn").addEventListener("click", async () => {
     const b = state.current; if (!b) return;
+    if (!(await ask(t("Deze bon en de foto worden definitief verwijderd.")))) return;
     try { await dbDel(b.id); await reload(); go("bonnen"); }
     catch (err) { show($("detailMsg"), "Verwijderen is mislukt. Probeer het opnieuw.", true); }
   });
 
   // ---------- CSV-overzicht ----------
   function csvText(list) {
-    const rows = [["Datum", "Winkel", "Bedrag", "Wie", "Project", "Pas of rekening", "Reden", "Foto"]]
-      .concat(list.map((b) => [nlDate(b.datum), b.winkel, (Number(b.bedrag) || 0).toFixed(2).replace(".", ","), b.wie, b.project, b.pas, b.reden, fotoName(b)]));
+    const rows = [["Datum", "Winkel", "Bedrag", "Wie", "Project", "Pas of rekening", "Reden", "Memo", "Foto"]]
+      .concat(list.map((b) => [nlDate(b.datum), b.winkel, (Number(b.bedrag) || 0).toFixed(2).replace(".", ","), b.wie, b.project, b.pas, b.reden, b.memo, fotoName(b)]));
     return "﻿" + rows.map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\r\n");
   }
   // Vaste bestandsnaam per bon, gebruikt in de export naar Dropbox en Drive.
@@ -515,7 +531,7 @@
     setLijsten: (l) => saveLijsten(l),
     normalize,
     getSetting, putSetting, reload, csvText, fotoName, today, go, setBadge, ocr, WINKELS, loadImage, toJpeg, slug, eur, nlDate, parseAmount,
-    user: () => state.user,
+    user: () => state.user, ask,
     alle: () => state.alle,
     visible,
     store: (name) => ({

@@ -54,15 +54,16 @@
     await window.BB.reload();
     const extra = {};
     for (const [k, m] of Object.entries(window.BBV || {})) extra[k] = Array.isArray(data[k]) ? await m.merge(data[k], getFoto) : 0;
-    return { n: nieuw.length, sg: extra.statiegeld || 0, ca: extra.cadeau || 0 };
+    return { n: nieuw.length, sg: extra.statiegeld || 0, ca: extra.cadeau || 0, re: extra.reserveringen || 0 };
   }
   const t = window.I18N.t;
-  const doneText = ({ n, sg, ca }) => {
-    if (!n && !sg && !ca) return t("Klaar. Er waren geen nieuwe bonnen om te importeren.");
+  const doneText = ({ n, sg, ca, re }) => {
+    if (!n && !sg && !ca && !re) return t("Klaar. Er waren geen nieuwe bonnen om te importeren.");
     const parts = [];
     if (n) parts.push(n === 1 ? t("1 bon") : t("{n} bonnen", { n }));
     if (sg) parts.push(sg === 1 ? t("1 statiegeldbon") : t("{n} statiegeldbonnen", { n: sg }));
     if (ca) parts.push(ca === 1 ? t("1 cadeaubon") : t("{n} cadeaubonnen", { n: ca }));
+    if (re) parts.push(re === 1 ? t("1 reservering") : t("{n} reserveringen", { n: re }));
     return t("Klaar. {x} geïmporteerd.", { x: parts.join(t(" en ")) });
   };
 
