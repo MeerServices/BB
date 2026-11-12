@@ -35,9 +35,12 @@
       const { fotoBestand, fotoData, ...rest } = b;
       await window.BB.put({ ...rest, foto: foto || undefined });
     }
-    const L = window.BB.lijsten(), D = data.lijsten || {};
-    const merged = {};
-    for (const k of ["gebruikers", "projecten", "passen"]) merged[k] = [...new Set([...(L[k] || []), ...(D[k] || [])])].sort((a, b) => a.localeCompare(b, "nl"));
+    const L = window.BB.lijsten(), D = window.BB.normalize(data.lijsten);
+    const merged = { gebruikers: [...L.gebruikers, ...D.gebruikers], per: { ...L.per } };
+    for (const [naam, v] of Object.entries(D.per)) {
+      const mine = merged.per[naam] || { projecten: [], passen: [] };
+      merged.per[naam] = { projecten: [...mine.projecten, ...v.projecten], passen: [...mine.passen, ...v.passen] };
+    }
     await window.BB.setLijsten(merged);
     await window.BB.reload();
     return nieuw.length;

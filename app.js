@@ -1,10 +1,10 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "1.4";
+  const VERSION = "1.5";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
-  const state = { bonnen: [], lijsten: { gebruikers: [], projecten: [], passen: [] }, photo: null, current: null, urls: [] };
+  const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", photo: null, current: null, urls: [] };
 
   // ---------- helpers ----------
   const eur = (n) => "€ " + (Number(n) || 0).toLocaleString("nl-NL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -59,7 +59,7 @@
 
   // ---------- views ----------
   function go(view) {
-    ["nieuw", "bonnen", "lijsten", "detail"].forEach((v) => ($("view-" + v).hidden = v !== view));
+    ["kies", "nieuw", "bonnen", "lijsten", "detail"].forEach((v) => ($("view-" + v).hidden = v !== view));
     document.querySelectorAll("nav button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === view || (view === "detail" && b.dataset.view === "bonnen"))));
     window.scrollTo(0, 0);
   }
@@ -180,7 +180,21 @@
     } finally { btn.disabled = false; btn.textContent = "Bon automatisch lezen"; }
   });
 
-  // ---------- lijsten ----------
+  // ---------- gebruikers en lijsten ----------
+  // lijsten = { gebruikers: [naam], per: { naam: { projecten: [], passen: [] } } }
+  const sortNl = (a) => [...new Set(a)].sort((x, y) => x.localeCompare(y, "nl"));
+  function normalize(l) {
+    l = l || {};
+    const gebruikers = sortNl(l.gebruikers || []);
+    const per = {};
+    if (l.per) for (const [k, v] of Object.entries(l.per)) per[k] = { projecten: sortNl(v.projecten || []), passen: sortNl(v.passen || []) };
+    // Oude opzet (één lijst voor iedereen): geef elke gebruiker die lijsten.
+    if (!l.per && (l.projecten || l.passen)) gebruikers.forEach((g) => { per[g] = { projecten: sortNl(l.projecten || []), passen: sortNl(l.passen || []) }; });
+    gebruikers.forEach((g) => { if (!per[g]) per[g] = { projecten: [], passen: [] }; });
+    return { gebruikers, per };
+  }
+  const mine = () => state.lijsten.per[state.user] || { projecten: [], passen: [] };
+  const allOf = (k) => sortNl([...Object.values(state.lijsten.per).flatMap((v) => v[k] || []), ...state.bonnen.map((b) => b[k === "projecten" ? "project" : "pas"]).filter(Boolean)]);
   function fillSelect(sel, items, placeholder, key) {
     const prev = sel.value || recall(key) || "";
     sel.innerHTML = "";
@@ -194,33 +208,77 @@
     items.forEach((v) => { const op = document.createElement("option"); op.value = v; op.textContent = v; sel.appendChild(op); });
     if (items.includes(prev)) sel.value = prev;
   }
-  function renderLijsten() {
-    const L = state.lijsten;
-    fillSelect($("f-wie"), L.gebruikers, "Kies wie", "wie");
-    fillSelect($("f-project"), L.projecten, "Kies project", "project");
-    fillSelect($("f-pas"), L.passen, "Kies pas of rekening", "pas");
-    fillFilter($("flt-project"), L.projecten, "Alle projecten");
-    fillFilter($("flt-pas"), L.passen, "Alle passen");
-    document.querySelectorAll(".group[data-list]").forEach((g) => {
-      const key = g.dataset.list, box = g.querySelector(".chips"); box.innerHTML = "";
-      if (!L[key].length) { const s = document.createElement("span"); s.className = "hint"; s.textContent = "Nog leeg."; box.appendChild(s); }
-      L[key].forEach((v) => {
-        const c = document.createElement("span"); c.className = "chip";
-        const t = document.createElement("span"); t.textContent = v;
-        const x = document.createElement("button"); x.type = "button"; x.setAttribute("aria-label", v + " verwijderen"); x.textContent = "×";
-        x.onclick = () => saveList(key, L[key].filter((i) => i !== v));
-        c.append(t, x); box.appendChild(c);
-      });
+  function chips(box, items, onRemove) {
+    box.innerHTML = "";
+    if (!items.length) { const s = document.createElement("span"); s.className = "hint"; s.textContent = "Nog leeg."; box.appendChild(s); }
+    items.forEach((v) => {
+      const c = document.createElement("span"); c.className = "chip";
+      const t = document.createElement("span"); t.textContent = v;
+      const x = document.createElement("button"); x.type = "button"; x.setAttribute("aria-label", v + " verwijderen"); x.textContent = "×";
+      x.onclick = () => onRemove(v);
+      c.append(t, x); box.appendChild(c);
     });
   }
-  ["f-wie", "f-project", "f-pas"].forEach((id) => $(id).addEventListener("change", (e) => remember(id.slice(2), e.target.value)));
-  async function saveList(key, arr) {
-    state.lijsten = { ...state.lijsten, [key]: arr }; renderLijsten();
+  function renderLijsten() {
+    const L = state.lijsten, M = mine();
+    $("userName").textContent = state.user || "Kies wie";
+    $("f-wie").textContent = state.user || "Kies wie";
+    fillSelect($("f-project"), M.projecten, "Kies project", "project-" + state.user);
+    fillSelect($("f-pas"), M.passen, "Kies pas of rekening", "pas-" + state.user);
+    fillFilter($("flt-project"), allOf("projecten"), "Alle projecten");
+    fillFilter($("flt-pas"), allOf("passen"), "Alle passen");
+    document.querySelectorAll(".who").forEach((el) => (el.textContent = state.user || "…"));
+    document.querySelectorAll(".group[data-list]").forEach((g) => {
+      const key = g.dataset.list;
+      if (key === "gebruikers") chips(g.querySelector(".chips"), L.gebruikers, (v) => removeUser(v));
+      else chips(g.querySelector(".chips"), M[key], (v) => saveMine(key, M[key].filter((i) => i !== v)));
+      g.querySelector(".addrow").hidden = key !== "gebruikers" && !state.user;
+    });
+    // gebruikerskeuze
+    const wl = $("whoList"); wl.innerHTML = "";
+    L.gebruikers.forEach((g) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "btn";
+      b.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>';
+      b.append(document.createTextNode(g)); if (g === state.user) b.setAttribute("aria-current", "true");
+      b.onclick = () => pickUser(g); wl.appendChild(b);
+    });
+  }
+  ["f-project", "f-pas"].forEach((id) => $(id).addEventListener("change", (e) => remember(id.slice(2) + "-" + state.user, e.target.value)));
+  async function saveLijsten(next) {
+    state.lijsten = normalize(next); renderLijsten();
     try { await putSetting("lijsten", state.lijsten); } catch (e) {}
   }
+  function saveMine(key, arr) {
+    if (!state.user) return;
+    const per = { ...state.lijsten.per, [state.user]: { ...mine(), [key]: arr } };
+    return saveLijsten({ ...state.lijsten, per });
+  }
+  async function addUser(name) {
+    name = name.trim(); if (!name) return;
+    if (!state.lijsten.gebruikers.includes(name)) await saveLijsten({ ...state.lijsten, gebruikers: [...state.lijsten.gebruikers, name] });
+  }
+  async function removeUser(name) {
+    const per = { ...state.lijsten.per }; delete per[name];
+    await saveLijsten({ gebruikers: state.lijsten.gebruikers.filter((g) => g !== name), per });
+    if (state.user === name) { state.user = ""; await setUser(""); go("kies"); }
+  }
+  async function setUser(name) {
+    state.user = name; remember("gebruiker", name);
+    try { await putSetting("gebruiker", name); } catch (e) {}
+    renderLijsten();
+  }
+  async function pickUser(name) { await setUser(name); go("nieuw"); }
+  $("userBtn").addEventListener("click", () => go("kies"));
+  $("f-wie").addEventListener("click", () => go("kies"));
+  $("whoAdd").addEventListener("click", async () => { const v = $("whoNew").value.trim(); if (!v) return; $("whoNew").value = ""; await addUser(v); await pickUser(v); });
+  $("whoNew").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("whoAdd").click(); } });
   document.querySelectorAll(".group[data-list]").forEach((g) => {
     const key = g.dataset.list, inp = g.querySelector("input"), btn = g.querySelector(".addrow button");
-    const add = () => { const v = inp.value.trim(); if (!v) return; if (!state.lijsten[key].includes(v)) saveList(key, [...state.lijsten[key], v].sort((a, b) => a.localeCompare(b, "nl"))); inp.value = ""; };
+    const add = () => {
+      const v = inp.value.trim(); if (!v) return; inp.value = "";
+      if (key === "gebruikers") addUser(v);
+      else if (!mine()[key].includes(v)) saveMine(key, [...mine()[key], v]);
+    };
     btn.addEventListener("click", add);
     inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); add(); } });
   });
@@ -237,14 +295,14 @@
     const bon = {
       id: (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)),
       winkel: $("f-winkel").value.trim(), datum: $("f-datum").value || today(), bedrag,
-      wie: $("f-wie").value, project: $("f-project").value, pas: $("f-pas").value, reden: $("f-reden").value.trim(),
+      wie: state.user, project: $("f-project").value, pas: $("f-pas").value, reden: $("f-reden").value.trim(),
       aangemaakt: new Date().toISOString(),
     };
     const missing = [];
     if (!state.photo) missing.push("foto"); if (bedrag == null) missing.push("bedrag");
     if (!bon.wie) missing.push("wie"); if (!bon.project) missing.push("project"); if (!bon.pas) missing.push("pas");
     if (missing.length) { show(msg, "Nog nodig: " + missing.join(", ") + ".", true); return; }
-    const btn = $("saveBtn"); btn.disabled = true; btn.textContent = "Bewaren…"; show(msg, "");
+    const btn = $("saveBtn"), lbl = btn.querySelector("span"); btn.disabled = true; lbl.textContent = "Bewaren…"; show(msg, "");
     try {
       bon.foto = state.photo.blob; bon.thumb = state.photo.thumb;
       await dbPut(bon);
@@ -253,7 +311,7 @@
       show(msg, "Bon bewaard.");
     } catch (err) {
       show(msg, "Bewaren is mislukt. Misschien is de opslag van je telefoon vol.", true);
-    } finally { btn.disabled = false; btn.textContent = "Bon bewaren"; }
+    } finally { btn.disabled = false; lbl.textContent = "Bon bewaren"; }
   });
 
   // ---------- lijst ----------
@@ -352,14 +410,16 @@
   // ---------- start ----------
   (async () => {
     try {
-      const l = await getSetting("lijsten");
-      if (l) state.lijsten = { gebruikers: l.gebruikers || [], projecten: l.projecten || [], passen: l.passen || [] };
-      renderLijsten();
+      state.lijsten = normalize(await getSetting("lijsten"));
+      const u = (await getSetting("gebruiker")) || recall("gebruiker") || "";
+      state.user = state.lijsten.gebruikers.includes(u) ? u : "";
       await reload();
+      renderLijsten();
+      if (!state.user) go("kies");
       if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
     } catch (e) {
       renderLijsten(); renderList();
-      $("status").textContent = "Opslag niet beschikbaar in deze browser";
+      go("kies");
     }
   })();
 
@@ -367,8 +427,9 @@
   window.BB = {
     all: async () => { await reload(); return state.bonnen.slice(); },
     put: dbPut,
-    lijsten: () => ({ ...state.lijsten }),
-    setLijsten: async (l) => { state.lijsten = l; renderLijsten(); await putSetting("lijsten", l); },
+    lijsten: () => JSON.parse(JSON.stringify(state.lijsten)),
+    setLijsten: (l) => saveLijsten(l),
+    normalize,
     getSetting, putSetting, reload, csvText, fotoName, today,
   };
 
