@@ -100,3 +100,15 @@ label.btn.is-busy{opacity:.55;pointer-events:none}
 .pickers .big-btn.primary{color:var(--accent-ink)}
 .pickers .big-btn .ic{width:22px;height:22px;stroke-width:2.4}
 #saveBtn .ic{width:22px;height:22px;stroke-width:2.4}
+
+.av{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;object-fit:cover;flex:none;background:var(--accent);color:var(--accent-ink);font-weight:700;overflow:hidden}
+.av-sm{width:24px;height:24px;font-size:10px}
+.av-md{width:40px;height:40px;font-size:15px;margin-right:4px}
+.av-lg{width:88px;height:88px;font-size:30px}
+.userbtn{padding-left:4px}
+.me-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.me-btns{flex:1 1 200px}
+.me-btns .btn{flex:1 1 110px}
+label.btn{flex-direction:row;font-size:15px;color:var(--ink)}
+label.btn.primary{color:var(--accent-ink)}
+.pickers .big-btn{font-size:16px}

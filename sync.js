@@ -40,6 +40,7 @@
     for (const [naam, v] of Object.entries(D.per)) {
       const mine = merged.per[naam] || { projecten: [], passen: [] };
       merged.per[naam] = { projecten: [...mine.projecten, ...v.projecten], passen: [...mine.passen, ...v.passen] };
+      const foto = mine.foto || v.foto; if (foto) merged.per[naam].foto = foto;
     }
     await window.BB.setLijsten(merged);
     await window.BB.reload();

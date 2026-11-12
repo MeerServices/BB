@@ -1,7 +1,7 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "1.6";
+  const VERSION = "1.7";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", photo: null, current: null, urls: [] };
@@ -187,7 +187,7 @@
     l = l || {};
     const gebruikers = sortNl(l.gebruikers || []);
     const per = {};
-    if (l.per) for (const [k, v] of Object.entries(l.per)) per[k] = { projecten: sortNl(v.projecten || []), passen: sortNl(v.passen || []) };
+    if (l.per) for (const [k, v] of Object.entries(l.per)) { per[k] = { projecten: sortNl(v.projecten || []), passen: sortNl(v.passen || []) }; if (v.foto) per[k].foto = v.foto; }
     // Oude opzet (één lijst voor iedereen): geef elke gebruiker die lijsten.
     if (!l.per && (l.projecten || l.passen)) gebruikers.forEach((g) => { per[g] = { projecten: sortNl(l.projecten || []), passen: sortNl(l.passen || []) }; });
     gebruikers.forEach((g) => { if (!per[g]) per[g] = { projecten: [], passen: [] }; });
@@ -222,6 +222,10 @@
   function renderLijsten() {
     const L = state.lijsten, M = mine();
     $("userName").textContent = state.user || "Kies wie";
+    $("userBtn").replaceChild(avatar(state.user, "av-sm"), $("userBtn").firstElementChild);
+    $("meFoto").replaceChildren(avatar(state.user, "av-lg"));
+    $("meFotoDel").hidden = !M.foto;
+    $("fotoGroup").hidden = !state.user;
     $("f-wie").textContent = state.user || "Kies wie";
     fillSelect($("f-project"), M.projecten, "Kies project", "project-" + state.user);
     fillSelect($("f-pas"), M.passen, "Kies pas of rekening", "pas-" + state.user);
@@ -238,11 +242,30 @@
     const wl = $("whoList"); wl.innerHTML = "";
     L.gebruikers.forEach((g) => {
       const b = document.createElement("button"); b.type = "button"; b.className = "btn";
-      b.innerHTML = '<svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>';
-      b.append(document.createTextNode(g)); if (g === state.user) b.setAttribute("aria-current", "true");
+      b.append(avatar(g, "av-md"), document.createTextNode(g)); if (g === state.user) b.setAttribute("aria-current", "true");
       b.onclick = () => pickUser(g); wl.appendChild(b);
     });
   }
+  // Pasfoto: rond plaatje met de foto, of de beginletters als er nog geen foto is.
+  function avatar(name, cls) {
+    const f = name && state.lijsten.per[name] && state.lijsten.per[name].foto;
+    if (f) { const i = document.createElement("img"); i.className = "av " + cls; i.src = f; i.alt = ""; return i; }
+    const d = document.createElement("span"); d.className = "av av-init " + cls; d.setAttribute("aria-hidden", "true");
+    d.textContent = name ? name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() : "?";
+    return d;
+  }
+  async function onPasfoto(e) {
+    const file = e.target.files && e.target.files[0]; e.target.value = ""; if (!file || !state.user) return;
+    try {
+      const img = await loadImage(file);
+      const side = Math.min(img.naturalWidth, img.naturalHeight), c = document.createElement("canvas"); c.width = c.height = 240;
+      c.getContext("2d").drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 240, 240);
+      await saveMine("foto", c.toDataURL("image/jpeg", 0.8));
+    } catch (err) {}
+  }
+  $("meCam").addEventListener("change", onPasfoto);
+  $("meGal").addEventListener("change", onPasfoto);
+  $("meFotoDel").addEventListener("click", () => { const per = { ...state.lijsten.per, [state.user]: { ...mine() } }; delete per[state.user].foto; saveLijsten({ ...state.lijsten, per }); });
   ["f-project", "f-pas"].forEach((id) => $(id).addEventListener("change", (e) => remember(id.slice(2) + "-" + state.user, e.target.value)));
   async function saveLijsten(next) {
     state.lijsten = normalize(next); renderLijsten();
