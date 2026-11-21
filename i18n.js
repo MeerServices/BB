@@ -20,7 +20,7 @@
     "Zo raak je geen bon meer kwijt en heb je je administratie altijd bij de hand.": "You'll never lose a receipt again, and your records are always at hand.",
     "© 2026 Vipware. Alle rechten voorbehouden.": "© 2026 Vipware. All rights reserved.",
     "Taal": "Language", "Stuur een bedankje": "Send a thank-you", "Blij met BB, of mis je iets? Laat het weten.": "Happy with BB, or missing something? Let us know.",
-    "Je bericht": "Your message", "E-mail": "Email",
+    "Je bericht": "Your message", "Uitleg": "Help", "versie": "version", "Voorlezen": "Read aloud", "Stoppen": "Stop", "Vorige hoofdstuk": "Previous chapter", "Volgende hoofdstuk": "Next chapter", "Vrouwenstem": "Female voice", "Mannenstem": "Male voice", "Stem": "Voice", "Voorlezen werkt niet in deze browser": "Read aloud is not supported in this browser", "© 2026 Vipware. Alle rechten voorbehouden.": "© 2026 Vipware. All rights reserved.", "E-mail": "Email",
     "Bedankt voor BB!": "Thanks for BB!", "Het volgende zou interessant zijn om erbij te hebben of te verbeteren:": "The following would be great to add or improve:", "Bedankje voor BB": "Thank-you for BB",
     // gebruiker
     "Wie ben jij?": "Who are you?", "BB onthoudt je keuze. Kies Iedereen om de bonnen van alle gebruikers te zien. Je kunt dit later rechtsboven wijzigen.": "BB remembers your choice. Choose Everyone to see the receipts of all users. You can change this later, top right.", "Iedereen": "Everyone",

@@ -205,3 +205,28 @@ nav button .lbl{overflow:visible;text-overflow:clip}
 .bd-row span:first-child{min-width:0;overflow-wrap:anywhere}
 .bd-n{font-size:12.5px;color:var(--muted)}
 #listBox .fold-btn .total span{font-size:14px;color:var(--ink);font-weight:600}
+
+/* v2.5: uitleg opgebouwd zoals X-RDP: kop met versie en taal, voorleesbalk, hoofdstukken, bedankje onderaan */
+.helpbox{padding:0;gap:0}
+.help-dh{border-radius:var(--r) var(--r) 0 0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);font-family:"Russo One",var(--f-sans);font-size:17px;letter-spacing:.3px}
+.seg.hlang{display:inline-flex;grid-template-columns:none;flex:none}
+.seg.hlang button{min-height:0;padding:5px 10px;font-size:12px;font-family:var(--f-sans)}
+.readbar{position:sticky;top:var(--hdr,0px);z-index:3;display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.readbar button{display:inline-grid;place-items:center;width:42px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer}
+.readbar svg{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.readbar button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.rvoice{display:inline-flex;margin-left:auto;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.rvoice button{border:0;border-radius:0;width:44px;height:34px}
+.rvoice button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.helpbox .help{padding:6px 16px 4px}
+.helpbox .help>p:first-child{margin:10px 0 4px;line-height:1.55}
+.helpbox .help h3{margin:16px 0 4px;font-family:"Russo One",var(--f-sans);font-weight:400;font-size:16px;letter-spacing:.3px;color:var(--accent)}
+.helpbox .help ul{gap:3px;margin:2px 0 4px}
+.helpbox .help li,.helpbox .help p{font-size:14.5px}
+.helpbox .help b{color:var(--ink)}
+.help .reading{background:color-mix(in srgb,var(--accent) 18%,transparent);border-radius:6px}
+.helpbox .thanks{margin:18px 16px 6px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--accent-soft);display:flex;flex-direction:column;gap:8px;text-align:center}
+.helpbox .thanks label{text-align:left}
+.helpbox .fbbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.helpbox .fbbtns .btn{min-width:140px}
+.helpbox .copyline{padding:8px 16px 14px;text-align:center}

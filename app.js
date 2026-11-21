@@ -1,7 +1,7 @@
 /* Bonnenbak — kassabonnen fotograferen, bewaren (IndexedDB op dit apparaat) en delen. */
 (() => {
   "use strict";
-  const VERSION = "2.4";
+  const VERSION = "2.5";
   document.getElementById("appVer").textContent = "v" + VERSION;
   const $ = (id) => document.getElementById(id);
   const state = { bonnen: [], lijsten: { gebruikers: [], per: {} }, user: "", alle: false, photo: null, current: null, urls: [] };
@@ -57,7 +57,8 @@
 
   async function reload() {
     const all = await dbAll();
-    state.bonnen = all.sort((a, b) => (b.aangemaakt || "").localeCompare(a.aangemaakt || ""));
+    // Nieuwste aankoopdatum bovenaan; bij gelijke datum de laatst ingevoerde eerst.
+    state.bonnen = all.sort((a, b) => (b.datum || "").localeCompare(a.datum || "") || (b.aangemaakt || "").localeCompare(a.aangemaakt || ""));
     renderList();
     setBadge("bonnen", mineBonnen().length);
   }
@@ -570,12 +571,73 @@
   document.querySelectorAll(".help[lang]").forEach((h) => (h.hidden = h.lang !== I.lang));
   $("appTitle").addEventListener("click", () => {
     const cur = VIEWS.filter((v) => v !== "info").find((v) => !$("view-" + v).hidden); if (cur) lastView = cur;
-    $("infoVer").textContent = "v" + VERSION;
+    $("helpT").textContent = t("Uitleg") + " · " + t("versie") + " " + VERSION; document.documentElement.style.setProperty("--hdr", document.querySelector("header").offsetHeight + "px"); readUI();
     if (!$("fbText").value.trim()) $("fbText").value = FB_START;
     updateFb(); go("info");
   });
   $("fbText").addEventListener("input", updateFb);
-  $("infoBack").addEventListener("click", () => go(PARENT[lastView] || lastView));
+  $("infoBack").addEventListener("click", () => { readStop(); go(PARENT[lastView] || lastView); });
+
+  // ---------- voorlezen (zoals in X-RDP): afspelen/stoppen, vorig/volgend hoofdstuk, vrouwen- of mannenstem ----------
+  const helpBody = () => document.querySelector('.help[lang="' + I.lang + '"]');
+  const ICO_PLAY = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>';
+  const ICO_STOP = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+  const FEM = /female|vrouw|ellen|colette|fenna|hanna|claire|lotte|laura|sara|zira|hazel|susan|samantha|karen|moira|tessa|serena|kate|libby|sonia|amy|emma|google nederlands|google us english/i;
+  const MAL = /\bmale\b|\bman\b|maarten|frank|xander|arnaud|daniel|david|mark|george|james|ryan|thomas|guy|google uk english male/i;
+  let readOn = false, readN = 0, readParts = [], readTok = 0;
+  let voiceG = "f"; try { voiceG = localStorage.getItem("bb-voice") || "f"; } catch (e) {}
+  function readVoice() {
+    const lang = I.lang === "en" ? "en" : "nl";
+    const vs = ((window.speechSynthesis && speechSynthesis.getVoices()) || []).filter((x) => x.lang && x.lang.toLowerCase().replace("_", "-").startsWith(lang));
+    const want = voiceG === "m" ? vs.filter((v) => MAL.test(v.name) && !/female/i.test(v.name)) : vs.filter((v) => FEM.test(v.name));
+    const pick = (a) => a.find((x) => /natural|online|network|google/i.test(x.name)) || a[0];
+    const v = pick(want); return { v: v || pick(vs) || null, lang, fake: !v && voiceG === "m" };
+  }
+  function readUI() {
+    const b = document.querySelector('.readbar [data-r="play"]'); if (!b) return;
+    b.classList.toggle("on", readOn); b.innerHTML = readOn ? ICO_STOP : ICO_PLAY;
+    b.title = readOn ? t("Stoppen") : t("Voorlezen"); b.setAttribute("aria-label", b.title);
+    document.querySelectorAll(".rvoice button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.g === voiceG)));
+  }
+  function readStop() { readOn = false; try { speechSynthesis.cancel(); } catch (e) {} readUI(); document.querySelectorAll(".help .reading").forEach((x) => x.classList.remove("reading")); }
+  function readStep() {
+    if (!readOn) return;
+    document.querySelectorAll(".help .reading").forEach((x) => x.classList.remove("reading"));
+    if (readN >= readParts.length) { readStop(); return; }
+    const el = readParts[readN++], txt = el.textContent.replace(/→/g, ", ").replace(/\//g, " ").replace(/\s+/g, " ").trim();
+    if (!txt) { readStep(); return; }
+    el.classList.add("reading"); el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    const rv = readVoice(), u = new SpeechSynthesisUtterance(txt);
+    u.lang = rv.lang === "en" ? "en-US" : "nl-NL"; if (rv.v) u.voice = rv.v; u.rate = 1.02; u.pitch = rv.fake ? 0.55 : 1;
+    const my = ++readTok; u.onend = () => { if (my === readTok) readStep(); }; u.onerror = () => { if (readOn && my === readTok) readStep(); };
+    speechSynthesis.speak(u);
+  }
+  function readFrom(n) {
+    if (!("speechSynthesis" in window)) { alert(t("Voorlezen werkt niet in deze browser")); return; }
+    readParts = [...helpBody().querySelectorAll("p,h3,li")]; readN = Math.max(0, Math.min(n, readParts.length - 1));
+    readOn = true; readUI(); readTok++; speechSynthesis.cancel(); setTimeout(readStep, 80);
+  }
+  function readChap(dir) {
+    const parts = [...helpBody().querySelectorAll("p,h3,li")];
+    const heads = [0, ...parts.map((p, k) => (p.nodeName === "H3" ? k : -1)).filter((k) => k > 0)];
+    const curr = readOn ? Math.max(0, readN - 1) : 0, idx = heads.filter((h) => h <= curr).length - 1;
+    let to = dir > 0 ? heads[Math.min(idx + 1, heads.length - 1)] : heads[Math.max(idx - (readOn && curr - heads[idx] < 2 ? 1 : 0), 0)];
+    if (!readOn && dir > 0) to = heads[Math.min(1, heads.length - 1)];
+    readFrom(to);
+  }
+  document.querySelector('.readbar [data-r="play"]').addEventListener("click", () => (readOn ? readStop() : readFrom(0)));
+  document.querySelector('.readbar [data-r="prev"]').addEventListener("click", () => readChap(-1));
+  document.querySelector('.readbar [data-r="next"]').addEventListener("click", () => readChap(1));
+  document.querySelectorAll(".rvoice button").forEach((x) => x.addEventListener("click", () => {
+    voiceG = x.dataset.g; try { localStorage.setItem("bb-voice", voiceG); } catch (e) {}
+    readUI(); if (readOn) readFrom(Math.max(0, readN - 1));
+  }));
+  // Tik op een alinea tijdens het voorlezen: vanaf daar verder.
+  document.querySelectorAll(".help[lang]").forEach((h) => h.addEventListener("click", (e) => {
+    if (!readOn) return; const el = e.target.closest("p,h3,li"); if (!el) return;
+    const i = [...h.querySelectorAll("p,h3,li")].indexOf(el); if (i >= 0) readFrom(i);
+  }));
+  readUI();
 
   // Koppelpunt voor sync.js (export en import).
   window.BB = {

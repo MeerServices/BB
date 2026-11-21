@@ -10,13 +10,13 @@
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=2.4">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Russo+One&display=swap">
+<link rel="stylesheet" href="style.css?v=2.5">
 </head>
 <body>
 <header>
   <div class="wrap">
-    <div class="brand"><h1><button class="titlebtn" id="appTitle" type="button" aria-label="Info over BB">BB <span id="appVer">v2.4</span> <small class="copy">©26 Vipware</small></button></h1><button class="userbtn" id="userBtn" type="button" aria-label="Andere gebruiker kiezen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><span id="userName">Kies wie</span></button></div>
+    <div class="brand"><h1><button class="titlebtn" id="appTitle" type="button" aria-label="Info over BB">BB <span id="appVer">v2.5</span> <small class="copy">©26 Vipware</small></button></h1><button class="userbtn" id="userBtn" type="button" aria-label="Andere gebruiker kiezen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><span id="userName">Kies wie</span></button></div>
     <nav role="tablist">
       <button role="tab" aria-selected="true" data-view="bonnen"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 21z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span class="lbl">Bonnen</span><span class="badge" hidden></span></button>
       <button role="tab" aria-selected="false" data-view="statiegeld"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v3.5c0 .6-.3 1.1-.7 1.5C8 9 7 10.5 7 12.5V19a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-6.5c0-2-1-3.5-2.3-4.5-.4-.4-.7-.9-.7-1.5V3"/><path d="M7 14h10"/></svg><span class="lbl">Statiegeld</span><span class="badge" hidden></span></button>
@@ -31,116 +31,49 @@
   <!-- INFO -->
   <section id="view-info" hidden>
     <button class="back" id="infoBack" type="button">← Terug</button>
-    <div class="group">
-      <h2>BB <span id="infoVer"></span></h2>
+    <div class="group helpbox">
+      <div class="help-dh"><span>BB · <span id="helpT">Uitleg</span></span><span class="seg hlang" role="group" aria-label="Taal"><button type="button" data-lang="nl" aria-pressed="true">NL</button><button type="button" data-lang="en" aria-pressed="false">EN</button></span></div>
+      <div class="readbar">
+        <button type="button" class="rb" data-r="play" title="Voorlezen" aria-label="Voorlezen"></button>
+        <button type="button" class="rb" data-r="prev" title="Vorige hoofdstuk" aria-label="Vorige hoofdstuk"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 5v14M18 5l-9 7 9 7z"/></svg></button>
+        <button type="button" class="rb" data-r="next" title="Volgende hoofdstuk" aria-label="Volgende hoofdstuk"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M18 5v14M6 5l9 7-9 7z"/></svg></button>
+        <span class="rvoice" role="group" aria-label="Stem"><button type="button" data-g="f" title="Vrouwenstem" aria-label="Vrouwenstem"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M12 14v7M9 18h6"/></svg></button><button type="button" data-g="m" title="Mannenstem" aria-label="Mannenstem"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/></svg></button></span>
+      </div>
       <div class="help" lang="nl" data-no-i18n>
-        <p class="info-text">BB is je digitale bonnenbak. Maak een foto van elke kassabon en leg meteen vast wie hem heeft betaald, voor welk project, met welke pas of rekening en waarom. Ook statiegeldbonnen, cadeaubonnen en reserveringen bewaar je in BB, zodat je nooit meer tegoed laat liggen of een afspraak vergeet.</p>
-        <h3>Gebruikers en Iedereen</h3>
-        <p>Rechtsboven staat wie je bent. BB onthoudt die keuze. Je ziet alleen je eigen bonnen, statiegeldbonnen, cadeaubonnen en reserveringen, en de tellers in het menu tellen alleen die van jou. Kies rechtsboven <b>Iedereen</b> om alles van alle gebruikers te zien. Nieuwe bonnen komen dan op naam van de laatst gekozen gebruiker. Onder Lijsten geef je elke gebruiker een eigen pasfoto, projecten en passen.</p>
-        <h3>Bonnen</h3>
-        <ul>
-          <li>Tik op <b>Nieuwe bon</b>, maak een foto met de camera of kies er een uit je galerij.</li>
-          <li>BB leest meteen de hele bon. Winkel, datum en bedrag worden ingevuld en alle tekst van de bon komt in het memoveld. Controleer het even. Met <b>Bon automatisch lezen</b> doe je dit opnieuw.</li>
-          <li>Kies project, pas of rekening en schrijf de reden erbij. Tik op <b>Bon bewaren</b>.</li>
-          <li>Tik op de regel met het aantal bonnen en het totaal om de lijst in of uit te klappen. Uitgeklapt zie je ook hoeveel er per project, per pas en (bij Iedereen) per persoon is uitgegeven. Tik op een project of pas om alleen die bonnen te zien.</li>
-          <li>Filter op project of pas en zie meteen het totaal. Tik op een bon om hem te bekijken, te delen via WhatsApp of e-mail, of te verwijderen.</li>
-          <li><b>Overzicht delen (CSV)</b> zet de bonnen die je ziet in een bestand voor Excel.</li>
-        </ul>
-        <h3>Statiegeld</h3>
-        <ul>
-          <li>Tik op <b>Scannen</b> en houd de streepjescode in het kader, of kies een foto uit je galerij. De streepjescode-verbeteraar haalt het nummer ook uit een scheve of vage foto.</li>
-          <li>BB leest de tekst van de bon: bedrag, BonNr., datum en geldig tot worden ingevuld en de rest komt in het memoveld.</li>
-          <li>Bij de kassa laat je de streepjescode groot op je scherm zien. Vink <b>Gebruikt</b> aan als je hem hebt ingeleverd.</li>
-          <li>Je kunt een bon bewerken en delen via WhatsApp, e-mail of de deelknop, met de streepjescode als plaatje.</li>
-          <li>Een statiegeldbon is standaard 3 maanden geldig. Pas dat aan als op de bon iets anders staat.</li>
-        </ul>
-        <h3>Cadeau</h3>
-        <ul>
-          <li>Bewaar cadeaubonnen en tegoedbonnen met waarde, pincode, van wie je hem kreeg en een instructie (bijvoorbeeld: alleen online inwisselen).</li>
-          <li>Scan de streepjescode, kies een foto of typ het nummer over. Vink <b>Opgemaakt</b> aan als het tegoed op is.</li>
-          <li>Standaard is een cadeaubon 2 jaar geldig.</li>
-        </ul>
-        <h3>Reserveringen</h3>
-        <ul>
-          <li>Leg reserveringen vast voor een restaurant, hotel, theater of evenement: waar, datum en tijd, aantal personen, reserveringsnummer, op naam van, telefoon of contact, aanbetaald bedrag en bijzonderheden.</li>
-          <li>Tik op <b>Typen</b>, of scan of fotografeer de bevestiging of het ticket. BB leest de tekst en vult in wat het herkent.</li>
-          <li>Met <b>In agenda zetten</b> komt de reservering in je agenda, met een herinnering een dag en twee uur vooraf.</li>
-          <li>Deel een reservering via WhatsApp of e-mail met wie meegaat. Vink <b>Afgerond</b> aan als hij geweest is.</li>
-        </ul>
-        <h3>Waarschuwingen</h3>
-        <p>Verloopt een statiegeldbon binnen 14 dagen of een cadeaubon binnen 30 dagen, of is er binnen 3 dagen een reservering, dan wordt de teller in het menu rood en staat er een waarschuwing bovenaan bij Bonnen. Met <b>Meldingen aanzetten</b> krijg je hooguit één melding per dag. Met <b>Herinnering in agenda</b> zet je de vervaldatum met herinneringen in je agenda.</p>
-        <h3>Export en import</h3>
-        <p>Onder Bonnen staat <b>Export en import</b>. Zet al je bonnen, statiegeld, cadeaubonnen en reserveringen met foto's in Dropbox, Google Drive of een back-upbestand, en haal ze op een ander toestel weer op. Bonnen die er al zijn worden niet dubbel toegevoegd.</p>
-        <h3>Verwijderen</h3>
-        <p>Voordat BB iets verwijdert, vraagt het altijd eerst: <b>Weet u het zeker?</b> Verwijderd is echt weg, dus maak af en toe een export.</p>
-        <h3>Op je telefoon zetten</h3>
-        <p>Open BB in Chrome of Safari en kies <b>Toevoegen aan startscherm</b>. Dan opent BB als een gewone app, ook zonder internet.</p>
-        <h3>Privacy</h3>
-        <p>Alles wordt alleen op dit toestel bewaard. Er gaat niets naar een server, behalve wat je zelf deelt of exporteert. Maak dus af en toe een export als back-up.</p>
+        <p><b>BB</b> is je digitale bonnenbak. Maak een foto van elke kassabon en leg meteen vast wie hem betaalde, voor welk project, met welke pas of rekening en waarom. De opbouw: <b>gebruiker → bonnen → project → pas of rekening</b>. Daarnaast bewaar je statiegeldbonnen, cadeaubonnen en reserveringen, zodat je nooit meer tegoed laat liggen.</p>
+        <h3>Starten</h3><ul><li>BB staat op <b>meerservices.github.io/BB</b>. Op je telefoon: open de link in Chrome of Safari en kies <b>Toevoegen aan startscherm</b>. BB opent dan als een gewone app, ook zonder internet.</li><li>Tik op <b>BB</b> linksboven voor deze uitleg, de taal en een bedankje.</li></ul>
+        <h3>Gebruikers en Iedereen</h3><ul><li>Rechtsboven staat wie je bent; BB onthoudt die keuze. Je ziet alleen je eigen bonnen, en de tellers in het menu tellen alleen die van jou.</li><li>Kies rechtsboven <b>Iedereen</b> om alles van alle gebruikers te zien. Nieuwe bonnen komen dan op naam van de laatst gekozen gebruiker.</li><li>Onder <b>Lijsten</b> geef je elke gebruiker een eigen pasfoto, projecten en passen.</li></ul>
+        <h3>Bonnen</h3><ul><li>Tik op <b>Nieuwe bon</b> en maak een foto met de camera of kies er een uit je galerij.</li><li>BB leest meteen de hele bon: winkel, datum en bedrag worden ingevuld en alle tekst komt in het memoveld. Controleer het even; met <b>Bon automatisch lezen</b> doe je het opnieuw.</li><li>Kies project, pas of rekening, schrijf de reden erbij en tik op <b>Bon bewaren</b>.</li><li>De lijst staat op <b>datum, nieuwste bovenaan</b>. Tik op de regel met het aantal bonnen en het totaal om hem in of uit te klappen; uitgeklapt zie je het totaal per project, per pas en (bij Iedereen) per persoon.</li><li>Filter op project of pas. <b>Tik op een bon</b> om hem te bekijken, te bewerken, te delen via WhatsApp of e-mail, of te verwijderen.</li><li><b>Overzicht delen (CSV)</b> zet de bonnen die je ziet in een bestand voor Excel.</li></ul>
+        <h3>Statiegeld</h3><ul><li>Tik op <b>Scannen</b> en houd de streepjescode in het kader, of kies een foto. De verbeteraar haalt het nummer ook uit een scheve of vage foto.</li><li>BB leest bedrag, BonNr., datum en geldig tot; de rest komt in het memoveld.</li><li>Bij de kassa laat je de streepjescode groot zien. Vink <b>Gebruikt</b> aan als je hem hebt ingeleverd.</li><li>Standaard 3 maanden geldig; pas dat aan als er op de bon iets anders staat.</li></ul>
+        <h3>Cadeau</h3><ul><li>Bewaar cadeaubonnen en tegoedbonnen met waarde, pincode, van wie je hem kreeg en een instructie (bijvoorbeeld: alleen online inwisselen).</li><li>Scan de streepjescode, kies een foto of typ het nummer over. Vink <b>Opgemaakt</b> aan als het tegoed op is.</li><li>Standaard 2 jaar geldig.</li></ul>
+        <h3>Reserveringen</h3><ul><li>Leg vast: waar, datum en tijd, aantal personen, reserveringsnummer, op naam van, contact, aanbetaling en bijzonderheden.</li><li>Tik op <b>Typen</b>, of scan of fotografeer de bevestiging. BB vult in wat het herkent.</li><li><b>In agenda zetten</b> zet de reservering in je agenda, met een herinnering een dag en twee uur vooraf. Vink <b>Afgerond</b> aan als hij geweest is.</li></ul>
+        <h3>Waarschuwingen</h3><ul><li>Verloopt statiegeld binnen 14 dagen, een cadeaubon binnen 30 dagen, of is er binnen 3 dagen een reservering, dan wordt de teller in het menu <b>rood</b> en staat er een waarschuwing bij Bonnen.</li><li><b>Meldingen aanzetten</b> geeft hooguit één melding per dag. <b>Herinnering in agenda</b> zet de vervaldatum in je agenda.</li></ul>
+        <h3>Export en import</h3><ul><li>Onder Bonnen staat <b>Export en import</b>: alles met foto's naar Dropbox, Google Drive of een back-upbestand, en op een ander toestel weer ophalen.</li><li>Wat er al is, wordt niet dubbel toegevoegd.</li></ul>
+        <h3>Verwijderen en privacy</h3><ul><li>Voordat BB iets verwijdert, vraagt het altijd: <b>Weet u het zeker?</b> Verwijderd is echt weg.</li><li>Alles staat alleen op dit toestel; er gaat niets naar een server, behalve wat je zelf deelt of exporteert. Maak dus af en toe een export als back-up.</li></ul>
       </div>
       <div class="help" lang="en" data-no-i18n hidden>
-        <p class="info-text">BB is your digital receipt box. Snap a photo of every receipt and record right away who paid, for which project, with which card or account, and why. You can also keep deposit slips, gift cards and reservations in BB, so you never leave credit unused or forget a booking.</p>
-        <h3>Users and Everyone</h3>
-        <p>The top right shows who you are, and BB remembers that choice. You only see your own receipts, deposit slips, gift cards and reservations, and the counters in the menu only count yours. Choose <b>Everyone</b> at the top right to see everything from all users. New receipts are then saved under the last chosen user. Under Lists, each user gets their own photo, projects and cards.</p>
-        <h3>Receipts</h3>
-        <ul>
-          <li>Tap <b>New receipt</b> and take a photo with the camera or pick one from your gallery.</li>
-          <li>BB reads the whole receipt right away. Store, date and amount are filled in and all text from the receipt goes into the memo field. Give it a quick check. <b>Read receipt automatically</b> does it again.</li>
-          <li>Pick a project and a card or account, and add the reason. Tap <b>Save receipt</b>.</li>
-          <li>Tap the line with the number of receipts and the total to expand or collapse the list. Expanded, you also see how much was spent per project, per card and (with Everyone) per person. Tap a project or card to see only those receipts.</li>
-          <li>Filter by project or card and see the total right away. Tap a receipt to view it, share it via WhatsApp or email, or delete it.</li>
-          <li><b>Share overview (CSV)</b> puts the receipts you see in a file for Excel.</li>
-        </ul>
-        <h3>Deposits</h3>
-        <ul>
-          <li>Tap <b>Scan</b> and hold the barcode inside the frame, or pick a photo from your gallery. The barcode enhancer reads the number even from a tilted or blurry photo.</li>
-          <li>BB reads the text on the slip: amount, receipt no., date and valid until are filled in, and the rest goes into the memo field.</li>
-          <li>At the register, show the barcode full size on your screen. Check <b>Used</b> once you've handed it in.</li>
-          <li>You can edit a slip and share it via WhatsApp, email or the share button, with the barcode as an image.</li>
-          <li>A deposit slip is valid for 3 months by default. Change that if the slip says otherwise.</li>
-        </ul>
-        <h3>Gift cards</h3>
-        <ul>
-          <li>Keep gift cards and store credit with value, PIN, who gave it to you and instructions (for example: redeem online only).</li>
-          <li>Scan the barcode, pick a photo or type the number. Check <b>Used up</b> when the balance is gone.</li>
-          <li>A gift card is valid for 2 years by default.</li>
-        </ul>
-        <h3>Reservations</h3>
-        <ul>
-          <li>Keep reservations for a restaurant, hotel, theater or event: where, date and time, number of people, reservation no., name on booking, phone or contact, deposit paid and notes.</li>
-          <li>Tap <b>Type</b>, or scan or photograph the confirmation or ticket. BB reads the text and fills in what it recognizes.</li>
-          <li><b>Add to calendar</b> puts the reservation in your calendar, with a reminder one day and two hours before.</li>
-          <li>Share a reservation via WhatsApp or email with whoever is coming along. Check <b>Done</b> once it has taken place.</li>
-        </ul>
-        <h3>Warnings</h3>
-        <p>When a deposit slip expires within 14 days or a gift card within 30 days, or a reservation is coming up within 3 days, its menu counter turns red and a warning appears at the top of Receipts. <b>Turn on notifications</b> gives you at most one notification a day. <b>Add calendar reminder</b> puts the expiry date with reminders in your calendar.</p>
-        <h3>Export and import</h3>
-        <p>Under Receipts you'll find <b>Export and import</b>. Save all your receipts, deposit slips, gift cards and reservations with photos to Dropbox, Google Drive or a backup file, and load them again on another device. Items that are already there are not added twice.</p>
-        <h3>Deleting</h3>
-        <p>Before BB deletes anything, it always asks first: <b>Are you sure?</b> Deleted means gone for good, so export now and then.</p>
-        <h3>Put it on your phone</h3>
-        <p>Open BB in Chrome or Safari and choose <b>Add to Home Screen</b>. BB then opens like a regular app, even offline.</p>
-        <h3>Privacy</h3>
-        <p>Everything is stored only on this device. Nothing goes to a server, except what you share or export yourself. So make an export now and then as a backup.</p>
+        <p><b>BB</b> is your digital receipt box. Snap a photo of every receipt and record right away who paid, for which project, with which card or account, and why. The structure: <b>user → receipts → project → card or account</b>. You can also keep deposit slips, gift cards and reservations, so you never leave credit unused.</p>
+        <h3>Getting started</h3><ul><li>BB lives at <b>meerservices.github.io/BB</b>. On your phone: open the link in Chrome or Safari and choose <b>Add to Home Screen</b>. BB then opens like a regular app, even offline.</li><li>Tap <b>BB</b> at the top left for this help, the language and a thank-you.</li></ul>
+        <h3>Users and Everyone</h3><ul><li>The top right shows who you are; BB remembers that choice. You only see your own receipts, and the menu counters only count yours.</li><li>Choose <b>Everyone</b> at the top right to see everything from all users. New receipts are then saved under the last chosen user.</li><li>Under <b>Lists</b>, each user gets their own photo, projects and cards.</li></ul>
+        <h3>Receipts</h3><ul><li>Tap <b>New receipt</b> and take a photo with the camera or pick one from your gallery.</li><li>BB reads the whole receipt right away: store, date and amount are filled in and all text goes into the memo field. Give it a quick check; <b>Read receipt automatically</b> does it again.</li><li>Pick a project and a card or account, add the reason and tap <b>Save receipt</b>.</li><li>The list is sorted by <b>date, newest first</b>. Tap the line with the number of receipts and the total to expand or collapse it; expanded, you see the total per project, per card and (with Everyone) per person.</li><li>Filter by project or card. <b>Tap a receipt</b> to view, edit, share via WhatsApp or email, or delete it.</li><li><b>Share overview (CSV)</b> puts the receipts you see in a file for Excel.</li></ul>
+        <h3>Deposits</h3><ul><li>Tap <b>Scan</b> and hold the barcode inside the frame, or pick a photo. The enhancer reads the number even from a tilted or blurry photo.</li><li>BB reads amount, receipt no., date and valid until; the rest goes into the memo field.</li><li>At the register, show the barcode full size. Check <b>Used</b> once you've handed it in.</li><li>Valid for 3 months by default; change it if the slip says otherwise.</li></ul>
+        <h3>Gift cards</h3><ul><li>Keep gift cards and store credit with value, PIN, who gave it and instructions (for example: redeem online only).</li><li>Scan the barcode, pick a photo or type the number. Check <b>Used up</b> when the balance is gone.</li><li>Valid for 2 years by default.</li></ul>
+        <h3>Reservations</h3><ul><li>Record where, date and time, number of people, reservation no., name on booking, contact, deposit and notes.</li><li>Tap <b>Type</b>, or scan or photograph the confirmation. BB fills in what it recognizes.</li><li><b>Add to calendar</b> adds it with a reminder one day and two hours before. Check <b>Done</b> once it has taken place.</li></ul>
+        <h3>Warnings</h3><ul><li>When a deposit slip expires within 14 days, a gift card within 30 days, or a reservation is within 3 days, the menu counter turns <b>red</b> and a warning appears on Receipts.</li><li><b>Turn on notifications</b> gives at most one notification a day. <b>Add calendar reminder</b> puts the expiry date in your calendar.</li></ul>
+        <h3>Export and import</h3><ul><li>Under Receipts you'll find <b>Export and import</b>: everything with photos to Dropbox, Google Drive or a backup file, and back on another device.</li><li>Items that are already there are not added twice.</li></ul>
+        <h3>Deleting and privacy</h3><ul><li>Before BB deletes anything, it always asks: <b>Are you sure?</b> Deleted means gone for good.</li><li>Everything is stored only on this device; nothing goes to a server except what you share or export. So export now and then as a backup.</li></ul>
       </div>
-      <p class="hint">© 2026 Vipware. Alle rechten voorbehouden.</p>
-    </div>
-    <div class="group">
-      <h3>Taal</h3>
-      <div class="seg seg2" role="group" aria-label="Taal">
-        <button type="button" data-lang="nl" aria-pressed="true">Nederlands</button>
-        <button type="button" data-lang="en" aria-pressed="false">English (US)</button>
+      <div class="thanks">
+        <div class="thanks-logo" aria-hidden="true"><svg viewBox="0 0 64 64" width="56" height="56"><rect x="8" y="24" width="48" height="12" rx="3" fill="var(--accent)"/><rect x="12" y="36" width="40" height="22" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/><rect x="29" y="24" width="6" height="34" fill="#d9534f"/><path d="M32 24c-4-9-14-12-15-6s8 6 15 6zM32 24c4-9 14-12 15-6s-8 6-15 6z" fill="#d9534f"/><path d="M48 6l1.6 3.4L53 11l-3.4 1.6L48 16l-1.6-3.4L43 11l3.4-1.6zM14 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="#f2b632"/></svg></div>
+        <h3 class="thanks-h">Stuur een bedankje</h3>
+        <p class="hint">Blij met BB, of mis je iets? Laat het weten.</p>
+        <label>Je bericht<textarea id="fbText" rows="6"></textarea></label>
+        <div class="btns fbbtns">
+          <a class="btn primary" id="fbMail"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5L12 13l8.5-6.5"/></svg>E-mail</a>
+          <a class="btn" id="fbWa" target="_blank" rel="noopener"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.6-5.2A8.5 8.5 0 1 1 21 11.5z"/></svg>WhatsApp</a>
+        </div>
       </div>
-    </div>
-    <div class="group">
-      <div class="thanks-logo" aria-hidden="true"><svg viewBox="0 0 64 64" width="64" height="64"><rect x="8" y="24" width="48" height="12" rx="3" fill="var(--accent)"/><rect x="12" y="36" width="40" height="22" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/><rect x="29" y="24" width="6" height="34" fill="#d9534f"/><path d="M32 24c-4-9-14-12-15-6s8 6 15 6zM32 24c4-9 14-12 15-6s-8 6-15 6z" fill="#d9534f"/><path d="M48 6l1.6 3.4L53 11l-3.4 1.6L48 16l-1.6-3.4L43 11l3.4-1.6zM14 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="#f2b632"/></svg></div>
-      <h3 class="thanks-h">Stuur een bedankje</h3>
-      <p class="hint">Blij met BB, of mis je iets? Laat het weten.</p>
-      <label>Je bericht<textarea id="fbText" rows="7"></textarea></label>
-      <div class="btns">
-        <a class="btn primary" id="fbMail"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5L12 13l8.5-6.5"/></svg>E-mail</a>
-        <a class="btn" id="fbWa" target="_blank" rel="noopener"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.6-5.2A8.5 8.5 0 1 1 21 11.5z"/></svg>WhatsApp</a>
-      </div>
+      <p class="hint copyline">© 2026 Vipware. Alle rechten voorbehouden.</p>
     </div>
   </section>
 
@@ -271,11 +204,11 @@
     <div class="btns"><button class="btn" value="no" id="askNo">Annuleren</button><button class="btn danger" value="yes" id="askYes">Ja, verwijderen</button></div>
   </form>
 </dialog>
-<script src="i18n.js?v=2.4"></script>
-<script src="config.js?v=2.4"></script>
-<script src="app.js?v=2.4"></script>
-<script src="sync.js?v=2.4"></script>
-<script src="scan.js?v=2.4"></script>
-<script src="vouchers.js?v=2.4"></script>
+<script src="i18n.js?v=2.5"></script>
+<script src="config.js?v=2.5"></script>
+<script src="app.js?v=2.5"></script>
+<script src="sync.js?v=2.5"></script>
+<script src="scan.js?v=2.5"></script>
+<script src="vouchers.js?v=2.5"></script>
 </body>
 </html>
